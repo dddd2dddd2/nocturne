@@ -240,6 +240,9 @@ def main():
         with open(os.path.join(OUT, fn), "w", encoding="utf-8") as fh:
             json.dump(node, fh, ensure_ascii=False, indent=2)
     print("written %d nodes -> %s" % (len(NODES), OUT))
+    # 顺带从 prose/ 重新生成剧情文档（docs/剧本/ + docs/结局/ 概要）
+    import generate_docs
+    generate_docs.main()
 
 
 if __name__ == "__main__":

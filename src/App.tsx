@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "./engine/types";
 import { Engine, clueTotal, initialState } from "./engine/engine";
 import { getStory } from "./stories";
-import { deleteSave, hasSave, loadSave, saveToSlot, writeSave } from "./storage";
+import { deleteSave, hasSave, loadSave, saveToSlot, writeSave, writeScrollPos } from "./storage";
 import StoryLibrary from "./components/StoryLibrary";
 import TitleScreen from "./components/TitleScreen";
 import NodeMap from "./components/NodeMap";
@@ -47,11 +47,19 @@ export default function App() {
     setView("title");
   }, []);
 
+  // 离开播放器前，先把当前节点的阅读位置写入本机（在视图切换/内容收缩前读 window.scrollY）
+  const saveReadingPos = useCallback(() => {
+    if (view === "play" && storyId && session) {
+      writeScrollPos(storyId, session.nodeId, window.scrollY);
+    }
+  }, [view, storyId, session]);
+
   const goLibrary = useCallback(() => {
+    saveReadingPos();
     setStoryId(null);
     setSession(null);
     setView("library");
-  }, []);
+  }, [saveReadingPos]);
 
   const newGame = useCallback(() => {
     if (!story) return;
@@ -70,6 +78,7 @@ export default function App() {
 
   const choose = useCallback(
     (text: string) => {
+      saveReadingPos(); // 离开当前节点前，记住读到哪了
       setSession((sess) => {
         if (!sess || !engine) return sess;
         const res = engine.choose(sess.nodeId, text, sess.state, sess.visits);
@@ -81,7 +90,7 @@ export default function App() {
         };
       });
     },
-    [engine],
+    [engine, saveReadingPos],
   );
 
   const clearAutoSave = useCallback(() => {
@@ -139,12 +148,21 @@ export default function App() {
               <button className={view === "play" ? "tab active" : "tab"} onClick={() => setView("play")}>
                 进入游戏
               </button>
-              <button className={view === "map" ? "tab active" : "tab"} onClick={() => setView("map")}>
+              <button
+                className={view === "map" ? "tab active" : "tab"}
+                onClick={() => {
+                  saveReadingPos();
+                  setView("map");
+                }}
+              >
                 节点树
               </button>
               <button
                 className={view === "characters" ? "tab active" : "tab"}
-                onClick={() => setView("characters")}
+                onClick={() => {
+                  saveReadingPos();
+                  setView("characters");
+                }}
               >
                 人物图谱
               </button>

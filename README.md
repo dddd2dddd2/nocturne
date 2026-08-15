@@ -47,19 +47,27 @@ stories/<id>/        # 一个故事 = 一个目录（量产其他小说的单位
     ├── story.ts     # 故事清单：标题文案 + 节点标题 + 人物 + 关系 + 变量标签
     ├── nodes/       # 节点 JSON（由 generate_nodes.py 生成）
     ├── nodes.data.ts# 引擎数据（npm run sync:data 生成，勿手改）
-    ├── generate_nodes.py / verify_witness.py
-    ├── prose/       # 剧本正文（每个节点一个 .md，直接编辑它即改游戏文案）
+    ├── generate_nodes.py / generate_docs.py / verify_witness.py
+    ├── prose/       # 正文唯一手改处（每个节点一个 .md）
     └── docs/        # 大纲 / 人物 / 时间线 / 节点 / 结局 / 质检
+                     #   └ 剧本/剧本正文.md 与 结局/*.md 的“概要”由 generate_docs.py 自动生成，勿手改
 ```
 
 ## 改正文（写文档，不用碰代码）
 
-正文以纯文档形式放在 `stories/<id>/prose/<节点ID>.md`，直接编辑即可。结构（选项/条件/变量）在 `generate_nodes.py` 里，正文在文档里，两者互不干扰：
+正文以纯文档形式放在 `stories/<id>/prose/<节点ID>.md`，这是**正文的唯一手改处**。结构（选项/条件/变量）在 `generate_nodes.py` 里，两者互不干扰：
 
 ```bash
-# 编辑 stories/charon/prose/node_1_1.md 后，重新生成数据：
+# 编辑 stories/charon/prose/node_1_1.md 后，重新生成数据 + 剧情文档：
 cd stories/charon && python generate_nodes.py && cd ../.. && npm run sync:data
 ```
+
+`python generate_nodes.py` 会自动完成三件事：
+1. 把 prose 灌进 `nodes/*.json`（引擎数据）；
+2. 生成 `docs/剧本/剧本正文.md`（全剧本正文，只读，勿手改）；
+3. 重写 `docs/结局/ENDING_*.md` 的「终局剧情概要与尾声后日谈」为 prose 自动摘录。
+
+这样正文不会在两处漂移：prose/ 是源头，其余都是它的生成物。
 
 新故事同理：把每个节点的正文写进 `prose/<节点ID>.md`，结构写在 `generate_nodes.py` 的 `NODES` 里，运行时自动按节点 ID 读取对应文档。
 

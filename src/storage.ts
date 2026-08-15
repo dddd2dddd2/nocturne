@@ -105,6 +105,28 @@ export function lastSavedAt(storyId: string, slot: number = AUTO_SLOT): number |
   return read(storyId, slot)?.savedAt ?? null;
 }
 
+/* —— 阅读位置记忆（按故事 + 节点记住滚动位置，离开播放器时保存、重进时恢复）—— */
+function posKey(storyId: string, nodeId: string): string {
+  return `${PREFIX}pos:${storyId}:${nodeId}`;
+}
+
+export function writeScrollPos(storyId: string, nodeId: string, y: number): void {
+  try {
+    localStorage.setItem(posKey(storyId, nodeId), String(Math.max(0, Math.round(y))));
+  } catch {
+    /* 忽略 */
+  }
+}
+
+export function readScrollPos(storyId: string, nodeId: string): number {
+  try {
+    const raw = localStorage.getItem(posKey(storyId, nodeId));
+    return raw ? Number(raw) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
 /** 列出全部档位（自动 + 手动），空档为 null。 */
 export function listSaves(storyId: string): Array<SaveMeta | null> {
   const slots: Array<SaveMeta | null> = [];
