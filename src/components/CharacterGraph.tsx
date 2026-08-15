@@ -51,11 +51,23 @@ interface Props {
 
 export default function CharacterGraph({ story, session }: Props) {
   const [selected, setSelected] = useState<string | null>("zero");
+  const [hover, setHover] = useState<string | null>(null);
   const state = session?.state ?? null;
   const { characters, relations, relationMeta, factions } = story;
 
   const byId = new Map(characters.map((c) => [c.id, c]));
   const detail = selected ? byId.get(selected) : null;
+  const tfWhen = detail?.trueFactionWhen;
+  const detailRevealed = !!detail?.trueFaction && !!tfWhen && tfWhen(state);
+
+  // 邻接表：悬停/选中某角色时，高亮其直接关联的边与相邻角色
+  const neighbors = new Map<string, Set<string>>();
+  for (const c of characters) neighbors.set(c.id, new Set([c.id]));
+  for (const r of relations) {
+    neighbors.get(r.from)?.add(r.to);
+    neighbors.get(r.to)?.add(r.from);
+  }
+  const focusId = hover ?? selected;
 
   // 图例只显示当前已「浮出水面」的阵营（隐藏阵营在进度揭示后才出现，避免剧透）
   const visibleFactions = [...new Set(characters.map((c) => resolvedFaction(c, state)))]
@@ -91,6 +103,7 @@ export default function CharacterGraph({ story, session }: Props) {
           {state ? "阵营与态度随游戏进度变化" : "开始游戏后显示信任/提防态度"}
         </span>
       </div>
+      <div className="chars-hint">悬停角色高亮其关系与盟友，点击查看档案；被聚焦的角色会呼吸发光。</div>
       <div className="chars-layout">
         <div className="chars-canvas">
           <svg width={W} height={H} style={{ display: "block" }}>
@@ -100,14 +113,24 @@ export default function CharacterGraph({ story, session }: Props) {
               if (!a || !b) return null;
               const meta = relationMeta[r.type];
               const e = edgePath(a.pos, b.pos);
+              const touching = focusId ? a.id === focusId || b.id === focusId : false;
+              const bothNear = focusId
+                ? !!(neighbors.get(focusId)?.has(a.id) && neighbors.get(focusId)?.has(b.id))
+                : false;
+              const edgeOpacity = focusId
+                ? touching
+                  ? 1
+                  : bothNear
+                    ? 0.45
+                    : 0.08
+                : 0.55;
               return (
-                <g key={i}>
+                <g key={i} style={{ opacity: edgeOpacity, transition: "opacity 0.2s ease" }}>
                   <path
                     d={`M ${e.sx} ${e.sy} L ${e.ex} ${e.ey}`}
                     fill="none"
                     stroke={meta.color}
-                    strokeWidth={1.4}
-                    opacity={0.55}
+                    strokeWidth={touching ? 2.6 : 1.4}
                     markerEnd={`url(#arrow-${r.type})`}
                   />
                   <text
@@ -116,7 +139,7 @@ export default function CharacterGraph({ story, session }: Props) {
                     textAnchor="middle"
                     fill={meta.color}
                     fontSize="10.5"
-                    opacity={0.9}
+                    opacity={touching ? 1 : 0.9}
                   >
                     {r.label}
                   </text>
@@ -140,6 +163,12 @@ export default function CharacterGraph({ story, session }: Props) {
             </defs>
             {characters.map((c) => {
               const isSel = selected === c.id;
+              const isHover = hover === c.id;
+              // 悬停时聚焦于悬停角色；离开鼠标后回到选中角色
+              const isFocus = hover ? isHover : isSel;
+              const near = focusId ? (neighbors.get(focusId)?.has(c.id) ?? false) : true;
+              const dimmed = !!focusId && !near && !isFocus;
+              const tier = !!focusId && near && !isFocus;
               const fid = resolvedFaction(c, state);
               const faction = factions[fid];
               const fc = faction?.color ?? "#6f8499";
@@ -149,9 +178,15 @@ export default function CharacterGraph({ story, session }: Props) {
               return (
                 <g
                   key={c.id}
-                  className="char-card"
+                  className={`char-card${isFocus ? " focus-pulse" : ""}`}
                   onClick={() => setSelected(isSel ? null : c.id)}
+                  onMouseEnter={() => setHover(c.id)}
+                  onMouseLeave={() => setHover(null)}
+                  style={{ opacity: isFocus ? 1 : dimmed ? 0.28 : tier ? 0.92 : 1, transition: "opacity 0.2s ease" }}
                 >
+                  {isFocus && (
+                    <circle cx={c.pos.x} cy={c.pos.y} r={52} fill={fc} className="focus-halo" />
+                  )}
                   <rect
                     x={x}
                     y={y}
@@ -159,8 +194,8 @@ export default function CharacterGraph({ story, session }: Props) {
                     height={CARD_H}
                     rx={8}
                     fill="rgba(12,20,34,0.92)"
-                    stroke={isSel ? "var(--cyan)" : fc}
-                    strokeWidth={isSel ? 2 : 1.3}
+                    stroke={isSel ? "var(--cyan)" : isHover ? "#e8f4f2" : fc}
+                    strokeWidth={isSel || isHover ? 2.2 : 1.3}
                     style={{ filter: isSel ? "drop-shadow(0 0 10px rgba(79,209,197,.35))" : undefined }}
                   />
                   <circle cx={c.pos.x} cy={y + 24} r={15} fill="rgba(12,20,34,0.6)" stroke={fc} strokeWidth={1.6} />
@@ -225,6 +260,11 @@ export default function CharacterGraph({ story, session }: Props) {
                 <strong style={{ color: factions[resolvedFaction(detail, state)]?.color ?? "#6f8499" }}>
                   {factions[resolvedFaction(detail, state)]?.label ?? "—"}
                 </strong>
+                {detailRevealed ? (
+                  <span className="faction-badge">真身</span>
+                ) : detail.trueFaction ? (
+                  <span className="faction-hint">真身未明</span>
+                ) : null}
               </div>
               <div className="detail-faction">
                 <span

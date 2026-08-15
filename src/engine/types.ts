@@ -114,6 +114,15 @@ export interface Faction {
   attitudeLabel?: string; // align=0 时的固定态度文案
 }
 
+// ---------------- 变量死亡（可选的故事钩子） ----------------
+export interface DeathResult {
+  victimId: string; // 死者角色 id
+  cause: string; // 死因
+  epitaph: string; // 一句话讣告
+  roster: string[]; // 死亡名单上的角色 id（含死者），按展示顺序
+  revealed: boolean; // false=身份待确认（死亡节点内），true=已结算
+}
+
 // ---------------- 故事清单（一个故事包导出它） ----------------
 export interface VariableLabels {
   sanity?: string;
@@ -140,4 +149,5 @@ export interface StoryDefinition {
   relationMeta: Record<RelationType, { label: string; color: string }>;
   factions: Record<string, Faction>;
   varLabels?: VariableLabels; // 状态面板文案（缺省用通用标签）
+  resolveDeath?: (s: Session) => DeathResult | null; // 变量死亡名单（无则禁用）
 }

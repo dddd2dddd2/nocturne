@@ -3,6 +3,7 @@ import type { Session, StoryDefinition } from "../engine/types";
 import { clueTotal } from "../engine/engine";
 import type { Engine } from "../engine/engine";
 import { actOf } from "../engine/format";
+import DeathList from "./DeathList";
 import SaveDialog from "./SaveDialog";
 
 interface Props {
@@ -43,6 +44,8 @@ export default function Player({
   const last = session.history[session.history.length - 1];
   const total = clueTotal(session.state);
   const titleOf = (id: string) => story.nodeTitles[id] ?? id;
+  const death = story.resolveDeath?.(session) ?? null;
+  const showDeathList = !!death && session.nodeId.startsWith("Node_2");
 
   const dialogEl =
     dialog && story ? (
@@ -107,6 +110,7 @@ export default function Player({
         </div>
         {last?.outcome && <div className="outcome">↳ {last.outcome}</div>}
         <p className="narrative">{rendered.narrative}</p>
+        {showDeathList && death && <DeathList story={story} death={death} />}
         <div className="choices">
           {rendered.choices.map((c, i) => (
             <button

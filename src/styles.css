@@ -487,11 +487,175 @@ body {
 
 .char-card {
   cursor: pointer;
-  transition: filter 0.15s;
+  transition: filter 0.15s ease, opacity 0.2s ease;
 }
 
 .char-card:hover {
-  filter: brightness(1.25);
+  filter: brightness(1.35);
+}
+
+/* 聚焦角色：呼吸发光 */
+.char-card.focus-pulse {
+  animation: char-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes char-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 5px rgba(79, 209, 197, 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(79, 209, 197, 0.8));
+  }
+}
+
+/* 聚焦光晕：围绕角色缓缓扩散 */
+.focus-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: halo-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes halo-breathe {
+  0%,
+  100% {
+    opacity: 0.07;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.18;
+    transform: scale(1.18);
+  }
+}
+
+.chars-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+/* ---------------- 死亡名单 ---------------- */
+.death-list {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(18, 10, 14, 0.5);
+  transition: border-color 0.4s ease;
+}
+
+.death-list.revealed {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.death-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.death-title {
+  color: var(--red);
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 14px;
+}
+
+.death-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.death-roster {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.death-card {
+  flex: 1 1 78px;
+  min-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px 8px;
+  background: rgba(12, 20, 34, 0.85);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.death-card:hover {
+  border-color: var(--text-dim);
+}
+
+.death-card.focused {
+  border-color: var(--cyan);
+}
+
+.death-card.dead {
+  border-color: var(--red);
+  background: rgba(88, 22, 26, 0.5);
+  animation: death-reveal 0.9s ease-out;
+}
+
+.death-face {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8f4f2;
+}
+
+.death-card.dead .death-face {
+  color: var(--red);
+}
+
+.death-name {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.death-status {
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+.death-card.dead .death-status {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.death-detail {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.death-detail.pending {
+  color: var(--text-dim);
+}
+
+.death-epitaph {
+  display: block;
+  margin-top: 4px;
+  color: var(--amber);
+}
+
+@keyframes death-reveal {
+  0% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(248, 113, 113, 0);
+  }
 }
 
 .char-detail .secret {
@@ -552,6 +716,24 @@ body {
   height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.faction-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(79, 209, 197, 0.14);
+  color: var(--cyan);
+  border: 1px solid rgba(79, 209, 197, 0.45);
+}
+
+.faction-hint {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  opacity: 0.75;
 }
 
 /* ---------------- 顶栏故事指示 ---------------- */

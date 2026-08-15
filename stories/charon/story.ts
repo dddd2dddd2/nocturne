@@ -2,11 +2,13 @@
    引擎、书架、图谱、节点树都只依赖这里导出的 StoryDefinition，不感知具体故事。 */
 import type {
   Character,
+  DeathResult,
   Faction,
   GameState,
   Relation,
   RelationType,
   Secret,
+  Session,
   StoryDefinition,
 } from "../../src/engine/types";
 import { NODES } from "./nodes.data";
@@ -25,6 +27,8 @@ const characters: Character[] = [
     tagline: "记忆被抹除的「空白人」",
     face: "零",
     faction: "observer",
+    trueFaction: "bait",
+    trueFactionWhen: (s) => !!s && s.clue_c >= 40,
     pos: { x: 450, y: 340 },
     known: ["名义中立，被 NORA 授予观察者权限", "醒来时发现自己记得一切，却唯独不记得自己"],
     secrets: [
@@ -32,7 +36,7 @@ const characters: Character[] = [
         !!s && s.clue_c >= 40,
       ),
       S("真实任务", "你是被安排进站的对照组/诱饵：这场局的终点，是定义你「是什么」。", (s) =>
-        !!s && s.clue_c >= 60,
+        !!s && s.clue_a + s.clue_b + s.clue_c >= 60,
       ),
     ],
   },
@@ -63,6 +67,8 @@ const characters: Character[] = [
     tagline: "认了没犯的罪的替罪羊",
     face: "裴",
     faction: "home",
+    trueFaction: "scapegoat",
+    trueFactionWhen: (s) => !!s && (s.clue_a >= 15 || s.bond >= 6),
     pos: { x: 100, y: 360 },
     known: ["表面证据链指向的头号嫌疑人", "03:30 深夜删除过门禁记录"],
     secrets: [
@@ -81,6 +87,8 @@ const characters: Character[] = [
     tagline: "藏起尸检的复仇者",
     face: "纪",
     faction: "truth",
+    trueFaction: "avenger",
+    trueFactionWhen: (s) => !!s && s.bond >= 6,
     pos: { x: 710, y: 140 },
     known: ["负责尸检，掌握通往深层真相的钥匙", "官方结论：真空窒息死亡"],
     secrets: [
@@ -117,6 +125,8 @@ const characters: Character[] = [
     tagline: "可能是回声体的联络人",
     face: "沈",
     faction: "truth",
+    trueFaction: "echo",
+    trueFactionWhen: (s) => !!s && s.clue_b >= 8,
     pos: { x: 300, y: 560 },
     known: ["第一个「接触回声」的人，SAN 值最低", "反复说「死者还在说话」"],
     secrets: [
@@ -135,6 +145,8 @@ const characters: Character[] = [
     tagline: "握着逃生舱钥匙的先发制人者",
     face: "白",
     faction: "home",
+    trueFaction: "deserter",
+    trueFactionWhen: (s) => !!s && s.key,
     pos: { x: 600, y: 560 },
     known: ["掌握逃生舱权限，是全站博弈的焦点", "反复试探逃生舱「到底能坐几个人」"],
     secrets: [
@@ -218,6 +230,12 @@ const factions: Record<string, Faction> = {
   plot: { label: "布局者", color: "#a78bfa", align: 0, attitudeLabel: "利用" },
   seed: { label: "种子库", color: "#34d399", align: 1 },
   judge: { label: "裁决者", color: "#f87171", align: 0, evalLabel: "评估" },
+  // —— 隐藏真身（随查案线索揭示后覆盖表面阵营）——
+  scapegoat: { label: "替罪羊", color: "#fbbf24", align: 1 },
+  avenger: { label: "复仇者", color: "#f472b6", align: 1 },
+  echo: { label: "回声体", color: "#e879f9", align: 0, attitudeLabel: "危险" },
+  deserter: { label: "独走者", color: "#fb7185", align: -1 },
+  bait: { label: "对照组", color: "#94a3b8", align: 0, attitudeLabel: "观察" },
 };
 
 const nodeTitles: Record<string, string> = {
@@ -265,6 +283,37 @@ const nodeTitles: Record<string, string> = {
   Node_End_8: "观测者",
 };
 
+// 变量死亡：风暴（Node_2_1）中你先去救了谁，决定谁没能撑过风暴。
+// 规则：白烬永不倒下（他是独走者，必须活到第三幕）；沈棠最脆弱（回声覆盖），
+// 除非你第一时间去了通讯舱；你救下沈棠时，无人看守的生命维持区里的童野最先耗尽氧气。
+function resolveDeath(s: Session): DeathResult | null {
+  // 是否已抵达「变量死亡」节点（Node_2_5）
+  if (!s.history.some((h) => h.nodeId === "Node_2_5")) return null;
+
+  const roster = ["shen", "tong", "bai", "pei", "ji", "chen"];
+  const rescue = s.history.find((h) =>
+    ["救沈棠", "救童野", "找白烬", "留在安全区观察"].includes(h.choice ?? ""),
+  )?.choice;
+
+  const revealed = s.nodeId !== "Node_2_5";
+  if (rescue === "救沈棠") {
+    return {
+      victimId: "tong",
+      cause: "氧气耗尽",
+      epitaph: "他抱着最后一只空氧气罐，眼睛还睁着——到死都在护着那间种子舱。",
+      roster,
+      revealed,
+    };
+  }
+  return {
+    victimId: "shen",
+    cause: "回声覆盖",
+    epitaph: "被发现时已没有脉搏，嘴角挂着一个不属于她的微笑。她在最后一刻，仍在用「我们」说话。",
+    roster,
+    revealed,
+  };
+}
+
 const story: StoryDefinition = {
   id: "charon",
   order: 1,
@@ -283,6 +332,7 @@ const story: StoryDefinition = {
   relations,
   relationMeta,
   factions,
+  resolveDeath,
   varLabels: {
     sanity: "SAN 理智",
     bond: "信任 / 绑定",

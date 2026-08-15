@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "./engine/types";
 import { Engine, clueTotal, initialState } from "./engine/engine";
 import { getStory } from "./stories";
@@ -15,6 +15,8 @@ export default function App() {
   const [storyId, setStoryId] = useState<string | null>(null);
   const [view, setView] = useState<View>("library");
   const [session, setSession] = useState<Session | null>(null);
+  // 读档后跳过紧接着的一次自动存档（避免覆盖自动档）
+  const skipNextAutosave = useRef(false);
 
   const story = storyId ? (getStory(storyId) ?? null) : null;
   const engine = useMemo(() => (story ? new Engine(story.nodes) : null), [story]);
@@ -29,8 +31,14 @@ export default function App() {
   );
 
   // 自动存档：会话每次变化（每步选择 / 重启 / 继续）都写入本机。
+  // 读档触发的会话变化通过一次性跳过标记跳过，避免覆盖自动档。
   useEffect(() => {
-    if (storyId && session) writeSave(storyId, session, metaFor(session));
+    if (!storyId || !session) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+    writeSave(storyId, session, metaFor(session));
   }, [storyId, session, metaFor]);
 
   const openStory = useCallback((id: string) => {
@@ -95,6 +103,7 @@ export default function App() {
       if (!storyId) return;
       const s = loadSave(storyId, slot);
       if (s) {
+        skipNextAutosave.current = true;
         setSession(s);
         setView("play");
       }

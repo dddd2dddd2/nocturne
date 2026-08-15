@@ -48,9 +48,20 @@ stories/<id>/        # 一个故事 = 一个目录（量产其他小说的单位
     ├── nodes/       # 节点 JSON（由 generate_nodes.py 生成）
     ├── nodes.data.ts# 引擎数据（npm run sync:data 生成，勿手改）
     ├── generate_nodes.py / verify_witness.py
-    ├── script/      # 剧本正文（沉浸式扩写）
+    ├── prose/       # 剧本正文（每个节点一个 .md，直接编辑它即改游戏文案）
     └── docs/        # 大纲 / 人物 / 时间线 / 节点 / 结局 / 质检
 ```
+
+## 改正文（写文档，不用碰代码）
+
+正文以纯文档形式放在 `stories/<id>/prose/<节点ID>.md`，直接编辑即可。结构（选项/条件/变量）在 `generate_nodes.py` 里，正文在文档里，两者互不干扰：
+
+```bash
+# 编辑 stories/charon/prose/node_1_1.md 后，重新生成数据：
+cd stories/charon && python generate_nodes.py && cd ../.. && npm run sync:data
+```
+
+新故事同理：把每个节点的正文写进 `prose/<节点ID>.md`，结构写在 `generate_nodes.py` 的 `NODES` 里，运行时自动按节点 ID 读取对应文档。
 
 ## 如何新增一个故事
 
