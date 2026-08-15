@@ -7,8 +7,8 @@
       "target": "Node_End_8",
       "condition": {
         "clue_min": 40,
-        "bond_min": -8,
-        "bond_max": 8
+        "bond_max": 5,
+        "key": false
       }
     },
     {

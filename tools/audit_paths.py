@@ -247,6 +247,8 @@ def build_report(audit, nodes_dir, no_loop):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="全路径审计器（多剧本）")
     ap.add_argument("--nodes", default=DEFAULT_NODES_DIR, help="节点 JSON 目录（默认《雾镇》）")
     ap.add_argument("--no-loop", action="store_true", help="禁止 2_4→2_1 折返（单遍视图）")

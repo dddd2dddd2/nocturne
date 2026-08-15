@@ -6,7 +6,7 @@
       "text": "完全交权（信任已崩）",
       "target": "Node_End_4",
       "condition": {
-        "bond_max": -15
+        "bond_max": 2
       }
     },
     {
@@ -16,7 +16,7 @@
         "bond": -5
       },
       "condition": {
-        "bond_min": -14
+        "bond_min": 3
       },
       "loop_guard": {
         "hint_after": 1,

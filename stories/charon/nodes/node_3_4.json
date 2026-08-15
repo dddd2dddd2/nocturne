@@ -6,7 +6,7 @@
       "text": "授权成功·返航",
       "target": "Node_End_2",
       "condition": {
-        "bond_min": 0,
+        "bond_min": 5,
         "clue_max": 39
       }
     },
@@ -14,7 +14,7 @@
       "text": "授权成功·返航前查真相",
       "target": "Node_3_6",
       "condition": {
-        "bond_min": 0,
+        "bond_min": 5,
         "clue_min": 40
       }
     },
@@ -23,14 +23,14 @@
       "target": "Node_End_3",
       "condition": {
         "key": true,
-        "bond_max": -5
+        "bond_max": 5
       }
     },
     {
       "text": "授权失败·净舱",
       "target": "Node_End_4",
       "condition": {
-        "bond_max": -1
+        "bond_max": 4
       }
     }
   ]
