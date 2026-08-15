@@ -159,7 +159,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <button className="brand" onClick={goLibrary}>
-          ◈ 互动小说<span className="brand-sub">INTERACTIVE</span>
+          ◈ 夜航船<span className="brand-sub">NOCTURNE</span>
         </button>
         {story && (
           <span className="story-indicator">

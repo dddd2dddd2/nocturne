@@ -2,7 +2,7 @@
    档位：slot 0 = 自动存档；slot 1..MAX_SLOTS = 手动存档位。 */
 import type { Session } from "./engine/types";
 
-const PREFIX = "charon-echo:";
+const PREFIX = "nocturne:";
 const VERSION = 1;
 export const AUTO_SLOT = 0;
 export const MAX_SLOTS = 3; // 手动档位数量（1..3）
