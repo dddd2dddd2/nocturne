@@ -62,6 +62,8 @@ export default function Player({
 }: Props) {
   const [dialog, setDialog] = useState<null | "save" | "load">(null);
   const [prefs, setPrefs] = useState<ReadingPrefs>(() => loadPrefs(story.id));
+  // 移动端：侧栏状态面板默认收起为一行摘要（桌面端由 CSS 始终展开）
+  const [panelOpen, setPanelOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const prevNodeRef = useRef(session.nodeId);
 
@@ -72,6 +74,8 @@ export default function Player({
   const isEnd = session.nodeId.startsWith("Node_End");
   const last = session.history[session.history.length - 1];
   const total = clueTotal(session.state);
+  const labels = story.varLabels ?? {};
+  const statSummary = `SAN ${session.state.sanity} · 线索 ${total} · ${labels.key ?? "密钥"} ${session.state.key ? "✔" : "✘"}`;
   const titleOf = (id: string) => story.nodeTitles[id] ?? id;
   const death = story.resolveDeath?.(session) ?? null;
   const showDeathList = !!death && session.nodeId.startsWith("Node_2");
@@ -139,12 +143,10 @@ export default function Player({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.nodeId]);
 
-  // 首次进入播放器：恢复到该节点上次离开时的滚动位置（同步、绘制前，避免闪烁）
+  // 首次进入播放器：恢复到该节点上次离开时的滚动位置；没有记录则回到顶部（同步、绘制前，避免闪烁）
   useLayoutEffect(() => {
     const saved = readScrollPos(story.id, session.nodeId);
-    if (saved > 0) {
-      window.scrollTo(0, saved);
-    }
+    window.scrollTo(0, saved > 0 ? saved : 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -192,19 +194,29 @@ export default function Player({
       >
         {!prefs.slideshow && <ReadingProgress accent={story.accent} />}
         <aside className="sidebar">
-          <StatePanel story={story} session={session} total={total} />
-          <button className="btn" onClick={onRestart}>
-            ↺ 重新开始
+          <button
+            className="sidebar-toggle"
+            onClick={() => setPanelOpen((v) => !v)}
+            aria-expanded={panelOpen}
+          >
+            <span className="sidebar-toggle-summary">{statSummary}</span>
+            <span className="sidebar-toggle-caret">{panelOpen ? "▴" : "▾"}</span>
           </button>
-          <button className="btn" onClick={() => setDialog("load")}>
-            📂 读档
-          </button>
-          <button className="btn" onClick={onOpenMap}>
-            ◈ 查看节点树
-          </button>
+          <div className={"sidebar-body" + (panelOpen ? " open" : "")}>
+            <StatePanel story={story} session={session} total={total} />
+            <button className="btn" onClick={onRestart}>
+              ↺ 重新开始
+            </button>
+            <button className="btn" onClick={() => setDialog("load")}>
+              📂 读档
+            </button>
+            <button className="btn" onClick={onOpenMap}>
+              ◈ 查看节点树
+            </button>
+          </div>
         </aside>
         <main ref={mainRef}>
-          <ReaderBar prefs={prefs} onChange={set} />
+          <ReaderBarPanel prefs={prefs} onChange={set} />
           <div className="ending-card">
             <div className="ending-badge">ENDING · {actOf(session.nodeId)}</div>
             <div className="ending-title">{title}</div>
@@ -224,16 +236,26 @@ export default function Player({
     >
       {!prefs.slideshow && <ReadingProgress accent={story.accent} />}
       <aside className="sidebar">
-        <StatePanel story={story} session={session} total={total} />
-        <button className="btn" onClick={() => setDialog("save")}>
-          💾 存档
+        <button
+          className="sidebar-toggle"
+          onClick={() => setPanelOpen((v) => !v)}
+          aria-expanded={panelOpen}
+        >
+          <span className="sidebar-toggle-summary">{statSummary}</span>
+          <span className="sidebar-toggle-caret">{panelOpen ? "▴" : "▾"}</span>
         </button>
-        <button className="btn" onClick={() => setDialog("load")}>
-          📂 读档
-        </button>
-        <button className="btn" onClick={onOpenMap}>
-          ◈ 查看节点树
-        </button>
+        <div className={"sidebar-body" + (panelOpen ? " open" : "")}>
+          <StatePanel story={story} session={session} total={total} />
+          <button className="btn" onClick={() => setDialog("save")}>
+            💾 存档
+          </button>
+          <button className="btn" onClick={() => setDialog("load")}>
+            📂 读档
+          </button>
+          <button className="btn" onClick={onOpenMap}>
+            ◈ 查看节点树
+          </button>
+        </div>
       </aside>
       <main ref={mainRef}>
         <div className="node-title">{titleOf(session.nodeId)}</div>
@@ -242,7 +264,7 @@ export default function Player({
           <span className="autosave"> · 已自动存档</span>
         </div>
         {last?.outcome && <div className="outcome">↳ {last.outcome}</div>}
-        <ReaderBar prefs={prefs} onChange={set} />
+        <ReaderBarPanel prefs={prefs} onChange={set} />
         <div className="narrative">
           <ProseView text={rendered.narrative} slideshow={prefs.slideshow} accent={story.accent} />
         </div>
@@ -497,6 +519,32 @@ function ReaderBar({
       >
         {prefs.eyeCare ? "护眼 ✓" : "护眼"}
       </button>
+    </div>
+  );
+}
+
+/* 阅读工具条：移动端收起为单个“阅读设置”开关，桌面端始终展开（由 CSS 控制） */
+function ReaderBarPanel({
+  prefs,
+  onChange,
+}: {
+  prefs: ReadingPrefs;
+  onChange: (p: Partial<ReadingPrefs>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="reader-group">
+      <button
+        className="reader-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span>阅读设置</span>
+        <span className="reader-toggle-caret">{open ? "▴" : "▾"}</span>
+      </button>
+      <div className={"reader-body" + (open ? " open" : "")}>
+        <ReaderBar prefs={prefs} onChange={onChange} />
+      </div>
     </div>
   );
 }
