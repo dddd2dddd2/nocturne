@@ -1,0 +1,10 @@
+{
+  "id": "Node_2_11",
+  "narrative": "Day 2 结束，离倒计时只剩一天。",
+  "choices": [
+    {
+      "text": "进入第三幕",
+      "target": "Node_3_1"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "Node_2_9",
+  "narrative": "你把 0.7 秒与假死迹象串起来：死者可能未死。",
+  "choices": [
+    {
+      "text": "独自深挖",
+      "target": "Node_2_10",
+      "effect": {
+        "clue_c": 5
+      }
+    },
+    {
+      "text": "告诉纪岚",
+      "target": "Node_2_10",
+      "effect": {
+        "bond": 3,
+        "clue_c": 3
+      }
+    },
+    {
+      "text": "试探 NORA",
+      "target": "Node_2_10",
+      "effect": {
+        "bond": -2,
+        "clue_c": 2
+      }
+    }
+  ]
+}

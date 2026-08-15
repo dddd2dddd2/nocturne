@@ -1,0 +1,29 @@
+{
+  "id": "Node_3_7",
+  "narrative": "最终摊牌：用死亡抉择逼回声体暴露。",
+  "choices": [
+    {
+      "text": "牺牲一名 NPC 逼现形",
+      "target": "Node_End_1",
+      "condition": {
+        "clue_min": 60,
+        "bond_min": 5
+      }
+    },
+    {
+      "text": "强行摊牌（准备不足）",
+      "target": "Node_End_5",
+      "condition": {
+        "clue_max": 59
+      }
+    },
+    {
+      "text": "犹豫不决",
+      "target": "Node_End_5"
+    },
+    {
+      "text": "自己顶上被牺牲的位置",
+      "target": "Node_3_10"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "Node_2_6",
+  "narrative": "派系撕裂，投票处决机制启动。",
+  "choices": [
+    {
+      "text": "支持处决裴延",
+      "target": "Node_2_7",
+      "effect": {
+        "bond": -5
+      }
+    },
+    {
+      "text": "反对并拖延",
+      "target": "Node_2_7",
+      "effect": {
+        "bond": 3
+      }
+    },
+    {
+      "text": "弃权观察",
+      "target": "Node_2_7",
+      "effect": {
+        "clue_a": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "Node_2_5",
+  "narrative": "风暴平息。一名 NPC 死亡——死的是谁，取决于此前的选择。",
+  "choices": [
+    {
+      "text": "调查死因",
+      "target": "Node_2_6",
+      "effect": {
+        "clue_a": 3
+      }
+    },
+    {
+      "text": "先安抚众人",
+      "target": "Node_2_6",
+      "effect": {
+        "bond": 1,
+        "sanity": 5
+      }
+    },
+    {
+      "text": "质问某人",
+      "target": "Node_2_6",
+      "effect": {
+        "bond": -2
+      }
+    }
+  ]
+}

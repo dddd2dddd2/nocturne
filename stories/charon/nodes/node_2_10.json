@@ -1,0 +1,29 @@
+{
+  "id": "Node_2_10",
+  "narrative": "陈戍攥着后门权限码；纪岚讲起导师旧案。",
+  "choices": [
+    {
+      "text": "接过陈戍的后门",
+      "target": "Node_2_11",
+      "effect": {
+        "bond": 3,
+        "clue_b": 3
+      }
+    },
+    {
+      "text": "听纪岚讲完旧案",
+      "target": "Node_2_11",
+      "effect": {
+        "bond": 4,
+        "clue_c": 5
+      }
+    },
+    {
+      "text": "两不相帮",
+      "target": "Node_2_11",
+      "effect": {
+        "clue_a": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "Node_1_9",
+  "narrative": "尸检追问：死者细胞没有完全死透。",
+  "choices": [
+    {
+      "text": "答应保密",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_c": 12,
+        "bond": 2
+      },
+      "outcome": "这是意识分离的残留。"
+    },
+    {
+      "text": "拒绝保密，公开",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_c": 12,
+        "bond": -5
+      }
+    }
+  ]
+}

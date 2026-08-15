@@ -1,0 +1,34 @@
+{
+  "id": "Node_2_1",
+  "narrative": "Day 2 00:00，第二次信号风暴。",
+  "choices": [
+    {
+      "text": "救沈棠",
+      "target": "Node_2_2",
+      "effect": {
+        "bond": 2
+      }
+    },
+    {
+      "text": "救童野",
+      "target": "Node_2_3",
+      "effect": {
+        "bond": 2
+      }
+    },
+    {
+      "text": "找白烬",
+      "target": "Node_2_4",
+      "effect": {
+        "bond": -2
+      }
+    },
+    {
+      "text": "留在安全区观察",
+      "target": "Node_2_5",
+      "effect": {
+        "clue_a": 3
+      }
+    }
+  ]
+}

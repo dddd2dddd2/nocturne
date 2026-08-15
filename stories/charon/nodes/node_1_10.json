@@ -1,0 +1,66 @@
+{
+  "id": "Node_1_10",
+  "narrative": "证据梳理：表面证据已指向裴延。",
+  "choices": [
+    {
+      "text": "指认裴延",
+      "target": "Node_1_11",
+      "effect": {
+        "bond": -5
+      },
+      "condition": {
+        "clue_min": 15,
+        "clue_max": 24
+      }
+    },
+    {
+      "text": "继续深挖",
+      "target": "Node_1_13",
+      "condition": {
+        "clue_min": 25
+      }
+    },
+    {
+      "text": "继续深挖（证据不足，先回现场）",
+      "target": "Node_1_2",
+      "effect": {
+        "bond": -2
+      },
+      "condition": {
+        "clue_max": 24
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "回现场翻过一次，没有新发现。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    },
+    {
+      "text": "找裴延对质",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_a": 5
+      },
+      "condition": {
+        "bond_min": 3
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "已对质过，得不到更多。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    },
+    {
+      "text": "找裴延对质（他戒备你）",
+      "target": "Node_1_2",
+      "effect": {
+        "bond": -1
+      },
+      "condition": {
+        "bond_max": 2
+      }
+    }
+  ]
+}

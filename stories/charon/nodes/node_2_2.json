@@ -1,0 +1,30 @@
+{
+  "id": "Node_2_2",
+  "narrative": "沈棠濒临覆盖，一会儿哭一会儿用我们说话。",
+  "choices": [
+    {
+      "text": "追问我们是谁",
+      "target": "Node_2_5",
+      "effect": {
+        "sanity": -5,
+        "bond": 3,
+        "clue_b": 5
+      }
+    },
+    {
+      "text": "注射镇静剂",
+      "target": "Node_2_5",
+      "effect": {
+        "sanity": 5,
+        "bond": -3
+      }
+    },
+    {
+      "text": "只记录不介入",
+      "target": "Node_2_5",
+      "effect": {
+        "clue_a": 3
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "Node_1_1",
+  "narrative": "Day 1 04:35，警报惊醒。NORA 授予你观察者权限。",
+  "choices": [
+    {
+      "text": "接受授权，问清规则",
+      "target": "Node_1_2",
+      "effect": {
+        "bond": 5
+      },
+      "outcome": "你接过了审计权限。"
+    },
+    {
+      "text": "质疑 NORA 后接受",
+      "target": "Node_1_2",
+      "effect": {
+        "bond": -5,
+        "clue_a": 2
+      },
+      "outcome": "NORA 的回答滴水不漏。"
+    },
+    {
+      "text": "拒绝授权，独立调查",
+      "target": "Node_1_2",
+      "outcome": "你没有接权限牌。"
+    }
+  ]
+}

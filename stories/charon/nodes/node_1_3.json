@@ -1,0 +1,32 @@
+{
+  "id": "Node_1_3",
+  "narrative": "实验舱现场：内部反锁的密室、真空、空针管。",
+  "choices": [
+    {
+      "text": "接受密室结论",
+      "target": "Node_1_4",
+      "effect": {
+        "clue_a": 10
+      },
+      "outcome": "门禁记录显示裴延深夜删过记录。"
+    },
+    {
+      "text": "强查原始门锁日志",
+      "target": "Node_1_7",
+      "effect": {
+        "bond": -3
+      },
+      "condition": {
+        "bond_min": 5
+      }
+    },
+    {
+      "text": "查针管与领药记录",
+      "target": "Node_1_4",
+      "effect": {
+        "clue_a": 5,
+        "clue_c": 3
+      }
+    }
+  ]
+}

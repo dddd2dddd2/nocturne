@@ -1,0 +1,25 @@
+{
+  "id": "Node_3_1",
+  "narrative": "Day 3 凌晨。24 小时内重启推进器，否则净舱。",
+  "choices": [
+    {
+      "text": "主导重启推进器",
+      "target": "Node_3_2"
+    },
+    {
+      "text": "主导指认异常体",
+      "target": "Node_3_5"
+    },
+    {
+      "text": "继续深挖真相",
+      "target": "Node_3_6",
+      "condition": {
+        "clue_min": 40
+      }
+    },
+    {
+      "text": "只记录，不干预",
+      "target": "Node_3_9"
+    }
+  ]
+}

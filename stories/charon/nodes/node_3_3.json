@@ -1,0 +1,24 @@
+{
+  "id": "Node_3_3",
+  "narrative": "SAN 濒危：你看见本不该存在的影像，听见死者说话。",
+  "choices": [
+    {
+      "text": "挣扎清醒",
+      "target": "Node_1_2",
+      "effect": {
+        "sanity": 15,
+        "bond": -2
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 3,
+        "hint": "你一次次从幻觉中挣扎出来。",
+        "locked_note": "理智已到极限。"
+      }
+    },
+    {
+      "text": "沉沦下去",
+      "target": "Node_End_5"
+    }
+  ]
+}

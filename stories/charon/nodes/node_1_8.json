@@ -1,0 +1,23 @@
+{
+  "id": "Node_1_8",
+  "narrative": "通讯日志：一条记录被删，备份被过度修复。",
+  "choices": [
+    {
+      "text": "要求看 NORA 备份",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_b": 8,
+        "bond": -3
+      },
+      "outcome": "修复痕里藏着 0.7 秒。"
+    },
+    {
+      "text": "帮沈棠隐瞒",
+      "target": "Node_1_10",
+      "effect": {
+        "bond": 3,
+        "clue_b": 3
+      }
+    }
+  ]
+}

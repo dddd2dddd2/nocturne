@@ -1,0 +1,36 @@
+{
+  "id": "Node_3_8",
+  "narrative": "你把决定权交给 NORA。",
+  "choices": [
+    {
+      "text": "完全交权（信任已崩）",
+      "target": "Node_End_4",
+      "condition": {
+        "bond_max": -15
+      }
+    },
+    {
+      "text": "完全交权",
+      "target": "Node_3_2",
+      "effect": {
+        "bond": -5
+      },
+      "condition": {
+        "bond_min": -14
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "已经交过一次权。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    },
+    {
+      "text": "有限授权",
+      "target": "Node_3_7",
+      "effect": {
+        "bond": -3
+      }
+    }
+  ]
+}

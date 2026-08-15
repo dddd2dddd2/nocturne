@@ -1,0 +1,27 @@
+{
+  "id": "Node_2_7",
+  "narrative": "指向裴延的证据太完整了，完整到像摆好的。",
+  "choices": [
+    {
+      "text": "接受证据链",
+      "target": "Node_2_8",
+      "effect": {
+        "clue_a": 5
+      }
+    },
+    {
+      "text": "质疑为什么这么完美",
+      "target": "Node_2_9",
+      "effect": {
+        "clue_b": 8
+      }
+    },
+    {
+      "text": "先不表态",
+      "target": "Node_2_8",
+      "effect": {
+        "clue_a": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "Node_1_11",
+  "narrative": "你指认裴延。他短暂辩解后认罪。",
+  "choices": [
+    {
+      "text": "接受裁决",
+      "target": "Node_End_2",
+      "outcome": "真相被永久掩盖。"
+    },
+    {
+      "text": "最后一刻反悔",
+      "target": "Node_1_13",
+      "effect": {
+        "clue_a": 2
+      },
+      "condition": {
+        "clue_min": 15
+      }
+    }
+  ]
+}

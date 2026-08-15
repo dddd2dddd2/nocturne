@@ -1,0 +1,22 @@
+{
+  "id": "Node_1_6",
+  "narrative": "生命维持区。氧气损耗异常，童野说是风暴损耗。",
+  "choices": [
+    {
+      "text": "查库存记录",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_c": 3,
+        "bond": -1
+      },
+      "outcome": "有 7% 氧气对不上。"
+    },
+    {
+      "text": "相信童野",
+      "target": "Node_1_10",
+      "effect": {
+        "bond": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "Node_3_9",
+  "narrative": "你只记录，不指认、不授权、不交易。",
+  "choices": [
+    {
+      "text": "接受这个意外结局",
+      "target": "Node_End_8",
+      "condition": {
+        "clue_min": 40,
+        "bond_min": -8,
+        "bond_max": 8
+      }
+    },
+    {
+      "text": "最后时刻出手",
+      "target": "Node_3_2",
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "只此一次。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    }
+  ]
+}

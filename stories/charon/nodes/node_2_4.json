@@ -1,0 +1,30 @@
+{
+  "id": "Node_2_4",
+  "narrative": "白烬试探：逃生舱到底能坐几个人？",
+  "choices": [
+    {
+      "text": "与他结盟",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": -4,
+        "key": true
+      },
+      "outcome": "他把密钥交到你手里。"
+    },
+    {
+      "text": "当面拒绝",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": 3
+      }
+    },
+    {
+      "text": "不动声色套话",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": -2,
+        "clue_a": 2
+      }
+    }
+  ]
+}

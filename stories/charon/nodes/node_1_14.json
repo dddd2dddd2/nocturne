@@ -1,0 +1,10 @@
+{
+  "id": "Node_1_14",
+  "narrative": "Day 1 结束，你进入修整。",
+  "choices": [
+    {
+      "text": "进入第二幕",
+      "target": "Node_2_1"
+    }
+  ]
+}

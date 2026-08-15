@@ -1,0 +1,29 @@
+{
+  "id": "Node_2_3",
+  "narrative": "童野私藏的备用氧气罐暴露。",
+  "choices": [
+    {
+      "text": "当众揭发",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": -5
+      }
+    },
+    {
+      "text": "帮他隐瞒",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": 4
+      }
+    },
+    {
+      "text": "私下问清用途",
+      "target": "Node_2_5",
+      "effect": {
+        "bond": 3,
+        "clue_c": 3
+      },
+      "outcome": "他提到了种子库。"
+    }
+  ]
+}

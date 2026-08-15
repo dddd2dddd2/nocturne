@@ -1,0 +1,22 @@
+{
+  "id": "Node_1_7",
+  "narrative": "强查门锁日志：0.7 秒空隙 + 过度修复痕。",
+  "choices": [
+    {
+      "text": "强制调取原始数据",
+      "target": "Node_1_4",
+      "effect": {
+        "clue_b": 10,
+        "bond": -8
+      },
+      "outcome": "0.7 秒，又是 0.7 秒。"
+    },
+    {
+      "text": "迂回找陈戍问门锁机制",
+      "target": "Node_1_4",
+      "effect": {
+        "clue_b": 3
+      }
+    }
+  ]
+}

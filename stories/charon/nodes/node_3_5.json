@@ -1,0 +1,31 @@
+{
+  "id": "Node_3_5",
+  "narrative": "你向 NORA 提交指认。指认谁，就是谁死。",
+  "choices": [
+    {
+      "text": "指认裴延",
+      "target": "Node_3_4",
+      "effect": {
+        "bond": -5
+      }
+    },
+    {
+      "text": "指认沈棠",
+      "target": "Node_End_5",
+      "condition": {
+        "clue_max": 9
+      }
+    },
+    {
+      "text": "指认沈棠（你看穿她是回声体）",
+      "target": "Node_3_6",
+      "condition": {
+        "clue_min": 10
+      }
+    },
+    {
+      "text": "指认死者林溯",
+      "target": "Node_3_6"
+    }
+  ]
+}

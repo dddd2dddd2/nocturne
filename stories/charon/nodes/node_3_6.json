@@ -1,0 +1,21 @@
+{
+  "id": "Node_3_6",
+  "narrative": "林溯现身：假死、NORA 合谋、回声体已混入。",
+  "choices": [
+    {
+      "text": "相信林溯，联手逼回声体现形",
+      "target": "Node_3_7"
+    },
+    {
+      "text": "怀疑林溯，与 NORA 联手",
+      "target": "Node_3_8"
+    },
+    {
+      "text": "都不信，要求当众摊牌",
+      "target": "Node_3_7",
+      "effect": {
+        "clue_c": 5
+      }
+    }
+  ]
+}

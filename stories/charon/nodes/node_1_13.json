@@ -1,0 +1,29 @@
+{
+  "id": "Node_1_13",
+  "narrative": "你串起三次 0.7 秒：证据是被精心布置的。",
+  "choices": [
+    {
+      "text": "独自继续调查",
+      "target": "Node_1_14",
+      "effect": {
+        "clue_c": 5
+      }
+    },
+    {
+      "text": "告诉纪岚",
+      "target": "Node_1_14",
+      "effect": {
+        "bond": 3,
+        "clue_c": 3
+      }
+    },
+    {
+      "text": "试探 NORA",
+      "target": "Node_1_14",
+      "effect": {
+        "bond": -2,
+        "clue_c": 2
+      }
+    }
+  ]
+}

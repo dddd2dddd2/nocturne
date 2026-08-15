@@ -1,0 +1,45 @@
+{
+  "id": "Node_1_5",
+  "narrative": "通讯舱。沈棠反复说：死者还在说话。",
+  "choices": [
+    {
+      "text": "追问你听到了什么",
+      "target": "Node_1_8",
+      "effect": {
+        "sanity": -5,
+        "bond": -2,
+        "clue_b": 5
+      },
+      "condition": {
+        "bond_min": 1
+      },
+      "outcome": "她提到了不该存在的脉冲。"
+    },
+    {
+      "text": "安抚她，先记录",
+      "target": "Node_1_2",
+      "effect": {
+        "bond": 2
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "安抚过一次，再安抚不再加信任。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    },
+    {
+      "text": "追向天线区",
+      "target": "Node_1_2",
+      "effect": {
+        "sanity": -10
+      },
+      "loop_guard": {
+        "hint_after": 1,
+        "max": 2,
+        "hint": "理智不足以再追。",
+        "locked_note": "该选项已用尽（仅首次有效）"
+      }
+    }
+  ]
+}

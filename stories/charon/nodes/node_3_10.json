@@ -1,0 +1,21 @@
+{
+  "id": "Node_3_10",
+  "narrative": "两个秘密的交汇：种子库，与你自己的身份。",
+  "choices": [
+    {
+      "text": "与童野保住种子库",
+      "target": "Node_End_6",
+      "condition": {
+        "bond_min": 8,
+        "clue_min": 30
+      }
+    },
+    {
+      "text": "面对自己的身份",
+      "target": "Node_End_7",
+      "condition": {
+        "clue_min": 60
+      }
+    }
+  ]
+}

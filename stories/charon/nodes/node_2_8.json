@@ -1,0 +1,29 @@
+{
+  "id": "Node_2_8",
+  "narrative": "与裴延对质。提到女儿时，他第一次露了破绽。",
+  "choices": [
+    {
+      "text": "提他的女儿",
+      "target": "Node_2_10",
+      "effect": {
+        "bond": 4,
+        "clue_a": 5
+      },
+      "outcome": "他没有杀人，只是去盗数据。"
+    },
+    {
+      "text": "逼他认罪",
+      "target": "Node_2_10",
+      "effect": {
+        "bond": -4
+      }
+    },
+    {
+      "text": "冷眼观察",
+      "target": "Node_2_10",
+      "effect": {
+        "clue_a": 3
+      }
+    }
+  ]
+}

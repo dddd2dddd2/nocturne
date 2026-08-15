@@ -1,0 +1,32 @@
+{
+  "id": "Node_1_4",
+  "narrative": "医疗舱。纪岚给出官方结论：真空窒息。",
+  "choices": [
+    {
+      "text": "接受官方结论",
+      "target": "Node_1_10",
+      "effect": {
+        "clue_a": 5
+      }
+    },
+    {
+      "text": "追问还有没有别的发现",
+      "target": "Node_1_9",
+      "effect": {
+        "bond": -1
+      },
+      "condition": {
+        "bond_min": 1
+      }
+    },
+    {
+      "text": "诈她：死者像自己用了药",
+      "target": "Node_1_9",
+      "effect": {
+        "clue_c": 3,
+        "bond": -2
+      },
+      "outcome": "纪岚失态露馅。"
+    }
+  ]
+}

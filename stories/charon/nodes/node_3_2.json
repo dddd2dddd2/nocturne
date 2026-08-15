@@ -1,0 +1,21 @@
+{
+  "id": "Node_3_2",
+  "narrative": "争取多数授权重启推进器。",
+  "choices": [
+    {
+      "text": "用诚意争取授权",
+      "target": "Node_3_4"
+    },
+    {
+      "text": "用交易换取授权",
+      "target": "Node_3_4",
+      "effect": {
+        "bond": -3
+      }
+    },
+    {
+      "text": "放弃合作，改指认",
+      "target": "Node_3_5"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "Node_1_2",
+  "narrative": "06:00 指挥舱。双倒计时公布，派系初现。",
+  "choices": [
+    {
+      "text": "先去现场看尸体",
+      "target": "Node_1_3",
+      "effect": {
+        "bond": 2
+      }
+    },
+    {
+      "text": "先去问沈棠",
+      "target": "Node_1_5",
+      "effect": {
+        "bond": 1
+      }
+    },
+    {
+      "text": "先确认氧气",
+      "target": "Node_1_6",
+      "effect": {
+        "bond": 1
+      }
+    }
+  ]
+}
