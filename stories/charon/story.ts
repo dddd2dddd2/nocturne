@@ -12,6 +12,7 @@ import type {
   StoryDefinition,
 } from "../../src/engine/types";
 import { NODES } from "./nodes.data";
+import { TERMS, TERM_CATEGORIES } from "./terms.data";
 
 const S = (label: string, value: string, fn: (s: GameState | null) => boolean): Secret => ({
   label,
@@ -333,6 +334,8 @@ const story: StoryDefinition = {
   relationMeta,
   factions,
   resolveDeath,
+  terms: TERMS,
+  termCategories: TERM_CATEGORIES,
   varLabels: {
     sanity: "SAN 理智",
     bond: "信任 / 绑定",

@@ -58,6 +58,7 @@ class Engine:
             "clue_b": 0,
             "clue_c": 0,
             "key": False,
+            "flags": {},
         }
 
     @staticmethod
@@ -82,6 +83,11 @@ class Engine:
             return False
         if "clue_max" in cond and clue > cond["clue_max"]:
             return False
+        if "flags" in cond:
+            flags = state.get("flags", {})
+            for name, want in cond["flags"].items():
+                if bool(flags.get(name, False)) != bool(want):
+                    return False
         return True
 
     def _apply(self, state, effect):
@@ -91,9 +97,16 @@ class Engine:
         st["clue_a"] = _clamp(st["clue_a"] + effect.get("clue_a", 0), 0, 40)
         st["clue_b"] = _clamp(st["clue_b"] + effect.get("clue_b", 0), 0, 40)
         st["clue_c"] = _clamp(st["clue_c"] + effect.get("clue_c", 0), 0, 40)
+        st["flags"] = dict(state.get("flags", {}))
         if effect.get("key"):
             st["key"] = True
         return st
+
+    def _narrative(self, node, state):
+        for v in node.get("variants", []):
+            if self._meets(state, v.get("when")):
+                return v["narrative"]
+        return node["narrative"]
 
     # ---------------------------------------------------------------- render
     def render(self, node_id, state, visits=None):
@@ -118,7 +131,7 @@ class Engine:
             if guard and count >= guard.get("hint_after", 0):
                 item["hint"] = guard.get("hint")
             choices.append(item)
-        return {"id": node_id, "narrative": node["narrative"], "choices": choices}
+        return {"id": node_id, "narrative": self._narrative(node, state), "choices": choices}
 
     # ---------------------------------------------------------------- choose
     def choose(self, node_id, choice_text, state, visits=None):
@@ -154,6 +167,8 @@ class Engine:
                 effect.update(branch.get("otherwise", {}))
 
         next_state = self._apply(state, effect)
+        for flag in choice.get("flags", []):
+            next_state["flags"][flag] = True
 
         # engine rules from 02_node_map.md 附录 B:
         # SAN=0 -> immediate E4; SAN<30 -> forced into Node_3_3

@@ -7,7 +7,10 @@
       "target": "Node_2_2",
       "effect": {
         "bond": 2
-      }
+      },
+      "flags": [
+        "rescue_shen"
+      ]
     },
     {
       "text": "救童野",

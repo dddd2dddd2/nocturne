@@ -39,7 +39,7 @@ export interface ChooseResult {
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
 
 export function initialState(): GameState {
-  return { sanity: 70, bond: 0, clue_a: 0, clue_b: 0, clue_c: 0, key: false };
+  return { sanity: 70, bond: 0, clue_a: 0, clue_b: 0, clue_c: 0, key: false, flags: {} };
 }
 
 export function clueTotal(s: GameState): number {
@@ -56,6 +56,11 @@ export function meets(state: GameState, cond?: ChoiceCondition): boolean {
   const c = clueTotal(state);
   if (cond.clue_min !== undefined && c < cond.clue_min) return false;
   if (cond.clue_max !== undefined && c > cond.clue_max) return false;
+  if (cond.flags) {
+    for (const [name, want] of Object.entries(cond.flags)) {
+      if (Boolean(state.flags?.[name]) !== want) return false;
+    }
+  }
   return true;
 }
 
@@ -67,9 +72,18 @@ function apply(state: GameState, effect: ChoiceEffect): GameState {
     clue_b: clamp(state.clue_b + (effect.clue_b ?? 0), 0, 40),
     clue_c: clamp(state.clue_c + (effect.clue_c ?? 0), 0, 40),
     key: state.key,
+    flags: { ...state.flags },
   };
   if (effect.key) st.key = true;
   return st;
+}
+
+/** 选正文：取第一个 when 满足的叙事变体；没有则用节点默认正文。 */
+function narrativeOf(node: NodeDef, state: GameState): string {
+  for (const v of node.variants ?? []) {
+    if (!v.when || meets(state, v.when)) return v.narrative;
+  }
+  return node.narrative;
 }
 
 export class Engine {
@@ -94,7 +108,7 @@ export class Engine {
       if (guard && count >= guard.hint_after) item.hint = guard.hint;
       choices.push(item);
     }
-    return { id: nodeId, narrative: node.narrative, choices };
+    return { id: nodeId, narrative: narrativeOf(node, state), choices };
   }
 
   choose(nodeId: string, choiceText: string, state: GameState, visits: Visits = {}): ChooseResult {
@@ -122,6 +136,9 @@ export class Engine {
     }
 
     const next = apply(state, effect);
+    if (choice.flags) {
+      for (const flag of choice.flags) next.flags[flag] = true;
+    }
 
     // 引擎规则（对齐 tools/engine.py）：
     // SAN=0 -> 立即进入净舱线；SAN<30 -> 强制进入 Node_3_3（结局/濒危节点除外）。

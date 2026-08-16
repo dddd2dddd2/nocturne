@@ -3,17 +3,22 @@
 
 正文一律放在 prose/<节点ID>.md 里，直接编辑文档即可；本文件只负责结构
 （选项 / 条件 / 变量）与组装。改完正文后运行：python generate_nodes.py
+
+叙事变体：prose/<节点ID>.variants.md 里用 ``<!-- flags: 名=值, ... -->``
+分割多段正文，每段是一个按旗标条件切换的变体（引擎 render 时取第一个
+满足的变体，否则用默认 prose/<节点ID>.md）。
 """
 import io
 import json
 import os
+import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nodes")
 PROSE = os.path.join(HERE, "prose")
 
 
-def C(text, target, effect=None, condition=None, outcome=None, guard=None):
+def C(text, target, effect=None, condition=None, outcome=None, guard=None, flags=None):
     d = {"text": text, "target": target}
     if effect:
         d["effect"] = effect
@@ -23,7 +28,31 @@ def C(text, target, effect=None, condition=None, outcome=None, guard=None):
         d["outcome"] = outcome
     if guard:
         d["loop_guard"] = guard
+    if flags:
+        d["flags"] = list(flags)
     return d
+
+
+def load_variants(nid):
+    """读取 prose/<nid>.variants.md：按 ``<!-- flags: 名=值, ... -->`` 切块。
+    返回 [{"when": {"flags": {...}}, "narrative": 正文}] 或 None。"""
+    path = os.path.join(PROSE, nid + ".variants.md")
+    if not os.path.exists(path):
+        return None
+    with io.open(path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+    parts = re.split(r"<!--\s*flags:\s*([^>]*?)-->", text)
+    variants = []
+    for i in range(1, len(parts), 2):
+        cond_str, body = parts[i], (parts[i + 1] if i + 1 < len(parts) else "")
+        flags = {}
+        for kv in cond_str.split(","):
+            k, _, v = kv.partition("=")
+            flags[k.strip()] = v.strip().lower() == "true"
+        body = body.strip()
+        if body:
+            variants.append({"when": {"flags": flags}, "narrative": body})
+    return variants or None
 
 
 def once(hint):
@@ -92,7 +121,7 @@ NODES = [
         C('拒绝保密，公开', 'Node_1_10', effect={'clue_c': 12, 'bond': -5})
     ]},
     {"id": "Node_2_1", "narrative": "", "choices": [
-        C('救沈棠', 'Node_2_2', effect={'bond': 2}),
+        C('救沈棠', 'Node_2_2', effect={'bond': 2}, flags=('rescue_shen',)),
         C('救童野', 'Node_2_3', effect={'bond': 2}),
         C('找白烬', 'Node_2_4', effect={'bond': -2}),
         C('留在安全区观察', 'Node_2_5', effect={'clue_a': 3})
@@ -231,16 +260,166 @@ def load_narrative(nid):
     return ""
 
 
+def load_variant_texts(nid):
+    """返回该节点的全部正文（默认 + 变体）拼接，供词条校验。"""
+    texts = [load_narrative(nid)]
+    vpath = os.path.join(PROSE, nid + ".variants.md")
+    if os.path.exists(vpath):
+        with io.open(vpath, "r", encoding="utf-8") as fh:
+            texts.append(fh.read())
+    return texts
+
+
+def parse_terms():
+    """解析 terms.md：分类配色 + 按分类分组的词条表。
+    返回 (categories, terms)，terms 为已校验的字典列表。"""
+    path = os.path.join(HERE, "terms.md")
+    if not os.path.exists(path):
+        return {}, []
+    with io.open(path, "r", encoding="utf-8") as fh:
+        lines = fh.read().splitlines()
+    sections = {}
+    current = None
+    for line in lines:
+        line = line.rstrip()
+        if line.startswith("## "):
+            current = line[3:].strip()
+            sections.setdefault(current, [])
+        elif current and line.startswith("|"):
+            sections[current].append(line)
+
+    def rows(section):
+        out = []
+        for line in sections.get(section, []):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) < 2 or all(not c for c in cells):
+                continue
+            if all(not c or re.fullmatch(r":?-{2,}:?", c) for c in cells):
+                continue  # 分隔行
+            if cells[0] in ("词条", "分类"):
+                continue  # 表头行
+            out.append(cells)
+        return out
+
+    categories = {}
+    for cells in rows("分类配色"):
+        if len(cells) >= 2 and cells[0] and re.fullmatch(r"#[0-9a-fA-F]{6}", cells[1]):
+            categories[cells[0]] = {"label": cells[0], "color": cells[1].lower()}
+
+    terms = []
+    for name in sections:
+        if name == "分类配色":
+            continue
+        for cells in rows(name):
+            if len(cells) < 3 or not cells[0]:
+                continue
+            term, first, meaning = cells[0], cells[1], cells[2]
+            d = {"term": term, "category": name, "meaning": meaning}
+            if first not in ("", "—", "-"):
+                d["firstSeen"] = first
+            if len(cells) > 3 and cells[3] not in ("", "—", "-"):
+                rel = [r for r in re.split(r"[、，,;/\s]+", cells[3]) if r]
+                if rel:
+                    d["related"] = rel
+            terms.append(d)
+    return categories, terms
+
+
+def validate_terms(categories, terms):
+    """词条校验：重复词条、未在 prose 中出现、firstSeen 节点不存在 / 不包含词条。
+    返回 (errors, warnings)。"""
+    node_ids = {n["id"] for n in NODES}
+    prose_has = {}
+    for nid in node_ids:
+        text = "\n".join(load_variant_texts(nid))
+        prose_has[nid] = text
+    all_prose = "\n".join(prose_has.values())
+
+    errors, warnings = [], []
+    seen = {}
+    all_names = {t["term"] for t in terms}
+    for t in terms:
+        term, cat = t["term"], t["category"]
+        if term in seen:
+            errors.append("重复词条「%s」（%s 与 %s）" % (term, seen[term], cat))
+            continue
+        seen[term] = cat
+        if cat not in categories:
+            warnings.append("词条「%s」的分类「%s」未在「分类配色」表中定义" % (term, cat))
+        if term not in all_prose:
+            errors.append("词条「%s」在 prose 中从未出现，无法高亮" % term)
+        fs = t.get("firstSeen")
+        if fs:
+            if fs not in node_ids:
+                errors.append("词条「%s」的首次出现节点 %s 不存在" % (term, fs))
+            elif term not in prose_has[fs]:
+                warnings.append("词条「%s」声称首次出现于 %s，但该节点正文不含此词条" % (term, fs))
+        for r in t.get("related", []):
+            if r not in all_names:
+                errors.append("词条「%s」的关联词条「%s」不存在于名词表" % (term, r))
+    return errors, warnings
+
+
+def write_terms_data(categories, terms):
+    """把名词表写为 terms.data.ts（story.ts 导入）。"""
+    out = os.path.join(HERE, "terms.data.ts")
+    L = [
+        "// AUTO-GENERATED by stories/charon/generate_nodes.py — 勿手改。",
+        "// 源数据：stories/charon/terms.md",
+        'import type { TermCategoryInfo, TermDef } from "../../src/engine/types";',
+        "",
+        "export const TERM_CATEGORIES: Record<string, TermCategoryInfo> = {",
+    ]
+    for cat, info in categories.items():
+        L.append('  %s: { label: %s, color: %s },' % (
+            json.dumps(cat, ensure_ascii=False),
+            json.dumps(info["label"], ensure_ascii=False),
+            json.dumps(info["color"]),
+        ))
+    L.append("};")
+    L.append("")
+    L.append("export const TERMS: TermDef[] = [")
+    for t in terms:
+        d = {"term": t["term"], "category": t["category"], "meaning": t["meaning"]}
+        if t.get("firstSeen"):
+            d["firstSeen"] = t["firstSeen"]
+        if t.get("related"):
+            d["related"] = t["related"]
+        L.append("  %s," % json.dumps(d, ensure_ascii=False))
+    L.append("];")
+    with io.open(out, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(L))
+    return out
+
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for n in NODES:
         node = dict(n)
         node["narrative"] = load_narrative(node["id"])
+        variants = load_variants(node["id"])
+        if variants:
+            node["variants"] = variants
         fn = node["id"].lower() + ".json"
         with open(os.path.join(OUT, fn), "w", encoding="utf-8") as fh:
             json.dump(node, fh, ensure_ascii=False, indent=2)
     print("written %d nodes -> %s" % (len(NODES), OUT))
-    # 顺带从 prose/ 重新生成剧情文档（docs/剧本/ + docs/结局/ 概要）
+
+    # 名词表：解析 terms.md → 校验 → terms.data.ts
+    categories, terms = parse_terms()
+    errors, warnings = validate_terms(categories, terms)
+    for w in warnings:
+        print("⚠ %s" % w)
+    if errors:
+        for e in errors:
+            print("✗ %s" % e)
+        raise SystemExit("名词表校验失败，已停止生成")
+    if terms:
+        out_terms = write_terms_data(categories, terms)
+        print("written %d terms -> %s" % (len(terms), out_terms))
+
+    # 顺带从 prose/ 重新生成剧情文档（docs/剧本/ + docs/结局/ + docs/名词表/）
     import generate_docs
     generate_docs.main()
 

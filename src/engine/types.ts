@@ -19,6 +19,8 @@ export interface ChoiceCondition {
   bond_max?: number;
   clue_min?: number;
   clue_max?: number;
+  /** 旗标要求：{ 旗标名: 期望值 }，全部满足才算通过（旗标由选项的 flags 置位）。 */
+  flags?: Record<string, boolean>;
 }
 
 export interface LoopGuard {
@@ -43,12 +45,21 @@ export interface Choice {
   outcome?: string;
   loop_guard?: LoopGuard;
   branch?: ChoiceBranch;
+  /** 选中后置位的旗标名（单调：一旦置位不再清除）。 */
+  flags?: string[];
 }
 
 export interface NodeDef {
   id: string;
   narrative: string;
+  /** 按状态切换的叙事变体：render 时取第一个 when 满足的变体，否则用 narrative。 */
+  variants?: NarrativeVariant[];
   choices: Choice[];
+}
+
+export interface NarrativeVariant {
+  when?: ChoiceCondition;
+  narrative: string;
 }
 
 // ---------------- 运行时状态 ----------------
@@ -59,6 +70,8 @@ export interface GameState {
   clue_b: number;
   clue_c: number;
   key: boolean;
+  /** 剧情旗标：由选项置位（单调），驱动叙事变体与条件。 */
+  flags: Record<string, boolean>;
 }
 
 export type Visits = Record<string, number>;
@@ -74,6 +87,28 @@ export interface Session {
   state: GameState;
   visits: Visits;
   history: HistoryEntry[];
+  /** 已读正文段落：nodeId → 玩家实际读到的段落（含变体分支的渲染文本）。
+      名词表按「读到文本」解锁，而非「到达节点」。 */
+  read?: Record<string, string[]>;
+}
+
+// ---------------- 名词表（正文高亮 + 档案解密） ----------------
+export interface TermDef {
+  /** 词条原文（正文高亮匹配用，需与 prose 中的写法一致）。 */
+  term: string;
+  /** 分类 id（中文，如 人物/地点/概念），配色见 termCategories。 */
+  category: string;
+  /** 首次出现的节点 id；缺省 = 始终公开。设置后，玩家走到该节点才解密。 */
+  firstSeen?: string;
+  /** 释义（解密后展示；悬停正文词条亦可见）。 */
+  meaning: string;
+  /** 关联词条名（按名互指，双向生效：A 列了 B，B 也能找到 A）。 */
+  related?: string[];
+}
+
+export interface TermCategoryInfo {
+  label: string;
+  color: string;
 }
 
 // ---------------- 人物图谱 ----------------
@@ -150,4 +185,7 @@ export interface StoryDefinition {
   factions: Record<string, Faction>;
   varLabels?: VariableLabels; // 状态面板文案（缺省用通用标签）
   resolveDeath?: (s: Session) => DeathResult | null; // 变量死亡名单（无则禁用）
+  /** 名词表：正文按词条高亮（分类配色 + 悬停释义），并可随进度逐条解密。 */
+  terms?: TermDef[];
+  termCategories?: Record<string, TermCategoryInfo>;
 }

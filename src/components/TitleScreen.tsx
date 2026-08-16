@@ -8,6 +8,7 @@ interface Props {
   onContinue: () => void;
   onMap: () => void;
   onChars: () => void;
+  onGlossary: () => void;
   onDeleteSave: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function TitleScreen({
   onContinue,
   onMap,
   onChars,
+  onGlossary,
   onDeleteSave,
 }: Props) {
   return (
@@ -48,6 +50,9 @@ export default function TitleScreen({
         </button>
         <button className="btn" onClick={onChars}>
           人物图谱
+        </button>
+        <button className="btn" onClick={onGlossary}>
+          名词表
         </button>
         {hasSave && (
           <button className="btn danger" onClick={onDeleteSave}>

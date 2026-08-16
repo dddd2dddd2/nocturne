@@ -40,13 +40,17 @@ function read(storyId: string, slot: number): StoredSave | null {
     if (data.v !== VERSION || !data.session || typeof data.session.nodeId !== "string") {
       return null;
     }
-    // 兼容旧版（无 stepCount/nodeTitle/preview）字段
+    // 兼容旧版（无 stepCount/nodeTitle/preview 字段、无 flags 状态）
     return {
       ...data,
       stepCount: data.stepCount ?? data.session.history?.length ?? 0,
       nodeId: data.nodeId ?? data.session.nodeId,
       nodeTitle: data.nodeTitle ?? data.session.nodeId,
       preview: data.preview ?? "",
+      session: {
+        ...data.session,
+        state: { ...data.session.state, flags: data.session.state?.flags ?? {} },
+      },
     };
   } catch {
     return null;
@@ -124,6 +128,28 @@ export function readScrollPos(storyId: string, nodeId: string): number {
     return raw ? Number(raw) || 0 : 0;
   } catch {
     return 0;
+  }
+}
+
+/* —— 剧透模式（名词表直接全部解密，供通读/校对；全局偏好）—— */
+function spoilerKey(): string {
+  return `${PREFIX}spoiler`;
+}
+
+export function loadSpoiler(): boolean {
+  try {
+    return localStorage.getItem(spoilerKey()) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function writeSpoiler(on: boolean): void {
+  try {
+    if (on) localStorage.setItem(spoilerKey(), "1");
+    else localStorage.removeItem(spoilerKey());
+  } catch {
+    /* 忽略 */
   }
 }
 

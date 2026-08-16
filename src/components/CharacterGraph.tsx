@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Character, GameState, Session, StoryDefinition } from "../engine/types";
+import type { Character, GameState, Session, StoryDefinition, TermDef } from "../engine/types";
+import { categoryInfo, termUnlocked } from "../engine/terms";
 
 const W = 900;
 const H = 640;
@@ -47,17 +48,33 @@ function attitudeOf(
 interface Props {
   story: StoryDefinition;
   session: Session | null;
+  spoiler: boolean;
+  onOpenGlossary: () => void;
 }
 
-export default function CharacterGraph({ story, session }: Props) {
+export default function CharacterGraph({ story, session, spoiler, onOpenGlossary }: Props) {
   const [selected, setSelected] = useState<string | null>("zero");
   const [hover, setHover] = useState<string | null>(null);
   const state = session?.state ?? null;
-  const { characters, relations, relationMeta, factions } = story;
+  const { characters, relations, relationMeta, factions, terms, termCategories } = story;
+  const titleOf = (id: string) => story.nodeTitles[id] ?? id;
 
   const byId = new Map(characters.map((c) => [c.id, c]));
   const detail = selected ? byId.get(selected) : null;
   const tfWhen = detail?.trueFactionWhen;
+
+  // 选中角色的词条档案：本人词条 + 关联词条（双向：A 列了 B，B 也能找到 A）
+  const charTerm = detail ? terms?.find((t) => t.term === detail.name) : undefined;
+  const relatedTerms: TermDef[] = (() => {
+    if (!detail) return [];
+    const rel = new Set<string>();
+    if (charTerm?.related) for (const r of charTerm.related) rel.add(r);
+    for (const t of terms ?? []) if (t.related?.includes(detail.name)) rel.add(t.term);
+    rel.delete(detail.name);
+    return (terms ?? []).filter((t) => rel.has(t.term));
+  })();
+  const charTerms = [...(charTerm ? [charTerm] : []), ...relatedTerms];
+  const charTermsOpen = charTerms.filter((t) => termUnlocked(t, session, spoiler)).length;
   const detailRevealed = !!detail?.trueFaction && !!tfWhen && tfWhen(state);
 
   // 邻接表：悬停/选中某角色时，高亮其直接关联的边与相邻角色
@@ -76,9 +93,14 @@ export default function CharacterGraph({ story, session }: Props) {
 
   return (
     <div>
-      <h2 style={{ margin: "4px 0 6px", letterSpacing: "3px" }}>
-        {story.title} · 人物图谱 · 关系网络
-      </h2>
+      <div className="chars-title-row">
+        <h2 style={{ margin: "4px 0 6px", letterSpacing: "3px" }}>
+          {story.title} · 人物图谱 · 关系网络
+        </h2>
+        <button className="btn" onClick={onOpenGlossary}>
+          名词表 →
+        </button>
+      </div>
       <div className="chars-legend">
         {Object.entries(relationMeta).map(([k, m]) => (
           <span className="edge-legend" key={k}>
@@ -301,6 +323,44 @@ export default function CharacterGraph({ story, session }: Props) {
                   </div>
                 );
               })}
+              {charTerms.length > 0 && (
+                <>
+                  <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 700, margin: "14px 0 2px" }}>
+                    词条档案 · {charTermsOpen}/{charTerms.length}
+                  </div>
+                  <div className="char-terms">
+                    {charTerms.map((t, i) => {
+                      const info = categoryInfo(termCategories, t.category);
+                      const open = termUnlocked(t, session, spoiler);
+                      return (
+                        <div className="char-term-row" key={i}>
+                          <div className="char-term-head">
+                            <span
+                              className="char-term-name"
+                              style={open ? { color: info.color } : undefined}
+                            >
+                              {t.term}
+                            </span>
+                            <span
+                              className="char-term-cat"
+                              style={{ color: info.color, borderColor: info.color }}
+                            >
+                              {info.label}
+                            </span>
+                          </div>
+                          {open ? (
+                            <div className="char-term-val">{t.meaning}</div>
+                          ) : (
+                            <div className="char-term-unknown">
+                              ？？？ —— 首次见于「{t.firstSeen ? titleOf(t.firstSeen) : "始终公开"}」
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
               <div style={{ marginTop: 10, fontSize: 11.5, color: "var(--text-dim)", lineHeight: 1.8 }}>
                 {state
                   ? "继续推进游戏，解锁线索可解密档案与真实阵营。"

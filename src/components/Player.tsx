@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { Session, StoryDefinition } from "../engine/types";
+import type { Session, StoryDefinition, TermCategoryInfo, TermDef } from "../engine/types";
 import { clueTotal } from "../engine/engine";
 import type { Engine } from "../engine/engine";
 import { actOf } from "../engine/format";
+import { categoryInfo, splitTermSegments } from "../engine/terms";
 import { readScrollPos, writeScrollPos } from "../storage";
 import DeathList from "./DeathList";
 import SaveDialog from "./SaveDialog";
+import CodexSettlement from "./CodexSettlement";
 
 interface Props {
   story: StoryDefinition;
@@ -14,6 +16,9 @@ interface Props {
   onChoose: (text: string) => void;
   onRestart: () => void;
   onOpenMap: () => void;
+  onOpenGlossary: () => void;
+  onMarkRead: (nodeId: string, paras: string[], mode: "replace" | "append") => void;
+  spoiler: boolean;
   onSave: (slot: number) => void;
   onLoad: (slot: number) => void;
   onDelete: (slot: number) => void;
@@ -56,6 +61,9 @@ export default function Player({
   onChoose,
   onRestart,
   onOpenMap,
+  onOpenGlossary,
+  onMarkRead,
+  spoiler,
   onSave,
   onLoad,
   onDelete,
@@ -150,6 +158,15 @@ export default function Player({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 名词表按「读到文本」解密：普通阅读在节点渲染时整段标记为已读；
+  // 幻灯片模式则由 Slideshow 逐段上报（只记真正展开看过的段落）。
+  useEffect(() => {
+    if (!prefs.slideshow) {
+      onMarkRead(session.nodeId, splitParagraphs(rendered.narrative), "replace");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.nodeId, rendered.narrative, prefs.slideshow]);
+
   // 滚动位置记忆：滚动时防抖写入；离开（卸载/换节点）时保存最终位置
   useEffect(() => {
     let timer: number | undefined;
@@ -220,8 +237,16 @@ export default function Player({
           <div className="ending-card">
             <div className="ending-badge">ENDING · {actOf(session.nodeId)}</div>
             <div className="ending-title">{title}</div>
-            <ProseView text={body} slideshow={prefs.slideshow} accent={story.accent} />
+            <ProseView
+              text={body}
+              slideshow={prefs.slideshow}
+              accent={story.accent}
+              terms={story.terms ?? []}
+              categories={story.termCategories}
+              onParaRead={(p) => onMarkRead(session.nodeId, [p], "append")}
+            />
           </div>
+          <CodexSettlement story={story} session={session} spoiler={spoiler} onOpenGlossary={onOpenGlossary} />
           <HistoryStrip story={story} session={session} />
         </main>
         {dialogEl}
@@ -263,10 +288,22 @@ export default function Player({
           {session.nodeId} · {actOf(session.nodeId)} · 已走过 {session.history.length} 步
           <span className="autosave"> · 已自动存档</span>
         </div>
-        {last?.outcome && <div className="outcome">↳ {last.outcome}</div>}
+        {last?.outcome && (
+          <div className="outcome">
+            ↳{" "}
+            <Highlighted text={last.outcome} terms={story.terms ?? []} categories={story.termCategories} />
+          </div>
+        )}
         <ReaderBarPanel prefs={prefs} onChange={set} />
         <div className="narrative">
-          <ProseView text={rendered.narrative} slideshow={prefs.slideshow} accent={story.accent} />
+          <ProseView
+            text={rendered.narrative}
+            slideshow={prefs.slideshow}
+            accent={story.accent}
+            terms={story.terms ?? []}
+            categories={story.termCategories}
+            onParaRead={(p) => onMarkRead(session.nodeId, [p], "append")}
+          />
         </div>
         {showDeathList && death && <DeathList story={story} death={death} />}
         <div className="choices">
@@ -339,14 +376,81 @@ function splitParagraphs(text: string): string[] {
     .filter(Boolean);
 }
 
+/* 名词表高亮：把一段正文里的词条按分类着色、悬停出释义工具条。 */
+function Highlighted({
+  text,
+  terms,
+  categories,
+}: {
+  text: string;
+  terms: TermDef[];
+  categories?: Record<string, TermCategoryInfo>;
+}) {
+  const segments = useMemo(() => splitTermSegments(text, terms), [text, terms]);
+  const [tip, setTip] = useState<{ x: number; y: number; term: TermDef } | null>(null);
+  if (segments.length === 0) return null;
+  return (
+    <>
+      {segments.map((s, i) => {
+        if (!s.term) return <span key={i}>{s.text}</span>;
+        const info = categoryInfo(categories, s.term.category);
+        return (
+          <span
+            key={i}
+            className="term"
+            style={{ color: info.color, borderColor: info.color }}
+            onMouseEnter={(e) => setTip({ x: e.clientX, y: e.clientY, term: s.term! })}
+            onMouseLeave={() => setTip(null)}
+          >
+            {s.text}
+          </span>
+        );
+      })}
+      {tip && (
+        <div
+          className="term-tip"
+          style={{
+            left: Math.min(tip.x + 14, Math.max(8, window.innerWidth - 300)),
+            top: tip.y + 18,
+          }}
+        >
+          <div className="term-tip-head">
+            <span className="term-tip-name" style={{ color: categoryInfo(categories, tip.term.category).color }}>
+              {tip.term.term}
+            </span>
+            <span
+              className="term-tip-cat"
+              style={{
+                color: categoryInfo(categories, tip.term.category).color,
+                borderColor: categoryInfo(categories, tip.term.category).color,
+              }}
+            >
+              {categoryInfo(categories, tip.term.category).label}
+            </span>
+          </div>
+          <div className="term-tip-body">{tip.term.meaning}</div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* 普通逐段渲染，段落间距由 CSS 变量 --read-para 控制 */
-function NarrativeText({ paragraphs }: { paragraphs: string[] }) {
+function NarrativeText({
+  paragraphs,
+  terms,
+  categories,
+}: {
+  paragraphs: string[];
+  terms: TermDef[];
+  categories?: Record<string, TermCategoryInfo>;
+}) {
   if (paragraphs.length === 0) return null;
   return (
     <>
       {paragraphs.map((p, i) => (
         <p className="narrative-p" key={i}>
-          {p}
+          <Highlighted text={p} terms={terms} categories={categories} />
         </p>
       ))}
     </>
@@ -354,7 +458,19 @@ function NarrativeText({ paragraphs }: { paragraphs: string[] }) {
 }
 
 /* 幻灯片式阅读：逐段淡入，点击 / 空格 / 方向键翻页 */
-function Slideshow({ paragraphs, accent }: { paragraphs: string[]; accent: string }) {
+function Slideshow({
+  paragraphs,
+  accent,
+  terms,
+  categories,
+  onParaRead,
+}: {
+  paragraphs: string[];
+  accent: string;
+  terms: TermDef[];
+  categories?: Record<string, TermCategoryInfo>;
+  onParaRead: (para: string) => void;
+}) {
   const [idx, setIdx] = useState(0);
   const last = paragraphs.length - 1;
   const cur = Math.min(idx, last);
@@ -368,6 +484,12 @@ function Slideshow({ paragraphs, accent }: { paragraphs: string[]; accent: strin
   useEffect(() => {
     setIdx(0);
   }, [paragraphs]);
+
+  // 段落被展开阅读时上报（含换节点后的第一段）
+  useEffect(() => {
+    onParaRead(paragraphs[cur]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cur]);
 
   // 键盘翻页：空格/→/Enter/PageDown 下一页，←/Backspace/PageUp 上一页
   useEffect(() => {
@@ -390,7 +512,9 @@ function Slideshow({ paragraphs, accent }: { paragraphs: string[]; accent: strin
     <div className="slideshow" role="button" tabIndex={0} onClick={() => go(1)}>
       <div className="slide-stage">
         <div key={cur} className="slide fade-in">
-          <p className="narrative-p">{paragraphs[cur]}</p>
+          <p className="narrative-p">
+            <Highlighted text={paragraphs[cur]} terms={terms} categories={categories} />
+          </p>
         </div>
       </div>
       <div className="slide-nav" onClick={(e) => e.stopPropagation()}>
@@ -418,13 +542,33 @@ function Slideshow({ paragraphs, accent }: { paragraphs: string[]; accent: strin
 }
 
 /* 根据阅读模式渲染正文：普通逐段 或 幻灯片 */
-function ProseView({ text, slideshow, accent }: { text: string; slideshow: boolean; accent: string }) {
+function ProseView({
+  text,
+  slideshow,
+  accent,
+  terms,
+  categories,
+  onParaRead,
+}: {
+  text: string;
+  slideshow: boolean;
+  accent: string;
+  terms: TermDef[];
+  categories?: Record<string, TermCategoryInfo>;
+  onParaRead?: (para: string) => void;
+}) {
   const paragraphs = useMemo(() => splitParagraphs(text), [text]);
   if (paragraphs.length === 0) return null;
   return slideshow ? (
-    <Slideshow paragraphs={paragraphs} accent={accent} />
+    <Slideshow
+      paragraphs={paragraphs}
+      accent={accent}
+      terms={terms}
+      categories={categories}
+      onParaRead={onParaRead ?? (() => {})}
+    />
   ) : (
-    <NarrativeText paragraphs={paragraphs} />
+    <NarrativeText paragraphs={paragraphs} terms={terms} categories={categories} />
   );
 }
 

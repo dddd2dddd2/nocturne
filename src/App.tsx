@@ -2,22 +2,33 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Session } from "./engine/types";
 import { Engine, clueTotal, initialState } from "./engine/engine";
 import { getStory } from "./stories";
-import { deleteSave, hasSave, loadSave, saveToSlot, writeSave, writeScrollPos } from "./storage";
+import {
+  deleteSave,
+  hasSave,
+  loadSave,
+  loadSpoiler,
+  saveToSlot,
+  writeSave,
+  writeScrollPos,
+  writeSpoiler,
+} from "./storage";
 import StoryLibrary from "./components/StoryLibrary";
 import TitleScreen from "./components/TitleScreen";
 import NodeMap from "./components/NodeMap";
 import CharacterGraph from "./components/CharacterGraph";
+import Glossary from "./components/Glossary";
 import Player from "./components/Player";
 
-type View = "library" | "title" | "map" | "characters" | "play";
+type View = "library" | "title" | "map" | "characters" | "glossary" | "play";
 
 // 视图导航顺序：index 增大视为「前进」（从右滑入），减小视为「后退」（从左滑入）
 const VIEW_ORDER: Record<View, number> = {
   library: 0,
   title: 1,
   play: 2,
-  map: 3,
-  characters: 4,
+  glossary: 3,
+  map: 4,
+  characters: 5,
 };
 
 export default function App() {
@@ -26,6 +37,8 @@ export default function App() {
   const view = nav.view;
   const dir = nav.dir;
   const [session, setSession] = useState<Session | null>(null);
+  // 剧透模式：名词表全部直接解密（全局偏好，通读/校对用）
+  const [spoiler, setSpoiler] = useState<boolean>(loadSpoiler);
   // 读档后跳过紧接着的一次自动存档（避免覆盖自动档）
   const skipNextAutosave = useRef(false);
 
@@ -62,7 +75,25 @@ export default function App() {
 
   const openStory = useCallback((id: string) => {
     setStoryId(id);
-    setSession(loadSave(id)); // 有存档则预载，供「继续游戏」
+    const st = getStory(id);
+    let sess = loadSave(id);
+    // 旧存档兼容：无 read 字段时，把已走过的节点按默认正文回填为「已读」，
+    // 避免名词表新机制把旧进度全部锁死。
+    if (st && sess && !sess.read) {
+      const eng = new Engine(st.nodes);
+      const read: Record<string, string[]> = {};
+      for (const h of sess.history) {
+        if (!read[h.nodeId]) {
+          const r = eng.render(h.nodeId, sess.state, sess.visits);
+          read[h.nodeId] = r.narrative
+            .split(/\n{2,}/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+      }
+      sess = { ...sess, read };
+    }
+    setSession(sess); // 有存档则预载，供「继续游戏」
     navigate("title");
   }, [navigate]);
 
@@ -92,6 +123,7 @@ export default function App() {
       state: initialState(),
       visits: {},
       history: [{ nodeId: story.startNode, choice: null, outcome: null }],
+      read: {},
     });
     navigate("play");
   }, [story, navigate]);
@@ -111,11 +143,32 @@ export default function App() {
           state: res.state,
           visits: { ...sess.visits },
           history: [...sess.history, { nodeId: res.nextNode, choice: text, outcome: res.outcome }],
+          read: sess.read,
         };
       });
     },
     [engine, saveReadingPos],
   );
+
+  // 记录「已读正文段落」：读到（渲染）的段落才计入名词表解密。
+  // replace=普通阅读整段标记；append=幻灯片逐段追加。去重后无变化则不更新，避免死循环。
+  const markRead = useCallback((nodeId: string, paras: string[], mode: "replace" | "append") => {
+    setSession((sess) => {
+      if (!sess) return sess;
+      const cur = sess.read?.[nodeId] ?? [];
+      const next = mode === "append" ? [...cur, ...paras] : paras;
+      const uniq = [...new Set(next)];
+      if (uniq.length === cur.length && uniq.every((p, i) => p === cur[i])) return sess;
+      return { ...sess, read: { ...sess.read, [nodeId]: uniq } };
+    });
+  }, []);
+
+  const toggleSpoiler = useCallback(() => {
+    setSpoiler((v) => {
+      writeSpoiler(!v);
+      return !v;
+    });
+  }, []);
 
   const clearAutoSave = useCallback(() => {
     if (!storyId) return;
@@ -190,6 +243,15 @@ export default function App() {
               >
                 人物图谱
               </button>
+              <button
+                className={view === "glossary" ? "tab active" : "tab"}
+                onClick={() => {
+                  saveReadingPos();
+                  navigate("glossary");
+                }}
+              >
+                名词表
+              </button>
               <button className="tab" onClick={goLibrary}>
                 ← 书架
               </button>
@@ -211,6 +273,7 @@ export default function App() {
               onContinue={continueGame}
               onMap={() => navigate("map")}
               onChars={() => navigate("characters")}
+              onGlossary={() => navigate("glossary")}
               onDeleteSave={clearAutoSave}
             />
           )}
@@ -220,7 +283,16 @@ export default function App() {
           )}
 
           {view === "characters" && story && (
-            <CharacterGraph story={story} session={session} />
+            <CharacterGraph
+              story={story}
+              session={session}
+              spoiler={spoiler}
+              onOpenGlossary={() => navigate("glossary")}
+            />
+          )}
+
+          {view === "glossary" && story && (
+            <Glossary story={story} session={session} spoiler={spoiler} onToggleSpoiler={toggleSpoiler} />
           )}
 
           {view === "play" && story && engine && (
@@ -232,6 +304,9 @@ export default function App() {
                 onChoose={choose}
                 onRestart={newGame}
                 onOpenMap={() => navigate("map")}
+                onOpenGlossary={() => navigate("glossary")}
+                onMarkRead={markRead}
+                spoiler={spoiler}
                 onSave={handleSave}
                 onLoad={handleLoad}
                 onDelete={handleDelete}

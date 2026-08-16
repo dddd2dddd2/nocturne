@@ -23,6 +23,8 @@ NODES_DIR = os.path.join(HERE, "nodes")
 SCRIPT_OUT = os.path.join(HERE, "docs", "剧本")
 SCRIPT_FILE = os.path.join(SCRIPT_OUT, "剧本正文.md")
 ENDINGS_DIR = os.path.join(HERE, "docs", "结局")
+TERMS_OUT = os.path.join(HERE, "docs", "名词表")
+TERMS_FILE = os.path.join(TERMS_OUT, "名词表.md")
 STORY_TS = os.path.join(HERE, "story.ts")
 
 _SENT_END = "。！？…!?；;"
@@ -96,6 +98,17 @@ def gen_script(nodes, titles):
         L.append("")
         L.append(nodes[nid]["narrative"])
         L.append("")
+        variants = nodes[nid].get("variants") or []
+        if variants:
+            conds = "、".join(
+                ", ".join("%s=%s" % (k, "真" if v else "假") for k, v in v.get("when", {}).get("flags", {}).items())
+                for v in variants
+            )
+            L.append(
+                "> 本节点含 %d 个按剧情分支切换的叙事变体（旗标：%s），见 `prose/%s.variants.md`。"
+                % (len(variants), conds, nid)
+            )
+            L.append("")
         choices = nodes[nid].get("choices") or []
         if choices:
             L.append("**选项**")
@@ -145,6 +158,45 @@ def update_endings():
     return updated
 
 
+def gen_terms_doc():
+    """从 terms.md 生成 docs/名词表/名词表.md（分类配色 + 各分类词条表）。"""
+    import generate_nodes
+    categories, terms = generate_nodes.parse_terms()
+    if not terms:
+        return 0
+    L = [
+        "# 《卡戎回声》名词表",
+        "",
+        "> ⚠️ 本文件由 `generate_docs.py` 自动生成，**请勿手改**。",
+        "> 唯一手改处是 `stories/charon/terms.md`；改完运行 `python generate_nodes.py` 即自动同步。",
+        "",
+        "## 分类配色",
+        "",
+        "| 分类 | 颜色 |",
+        "| --- | --- |",
+    ]
+    for cat, info in categories.items():
+        L.append("| %s | `%s` |" % (cat, info["color"]))
+    L += ["", "> 正文中的词条按此配色高亮，悬停可见释义；「名词表」页随剧情进度逐条解密（到达首次出现节点后解锁）。", ""]
+    for cat in categories:
+        group = [t for t in terms if t["category"] == cat]
+        if not group:
+            continue
+        L.append("## " + cat)
+        L.append("")
+        L.append("| 词条 | 首次出现 | 释义 | 关联 |")
+        L.append("| --- | --- | --- | --- |")
+        for t in group:
+            first = t.get("firstSeen", "—")
+            rel = "、".join(t.get("related", [])) or "—"
+            L.append("| %s | %s | %s | %s |" % (t["term"], first, t["meaning"], rel))
+        L.append("")
+    os.makedirs(TERMS_OUT, exist_ok=True)
+    with io.open(TERMS_FILE, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(L))
+    return len(terms)
+
+
 def main():
     nodes = read_nodes()
     titles = read_titles()
@@ -153,9 +205,10 @@ def main():
     with io.open(SCRIPT_FILE, "w", encoding="utf-8") as fh:
         fh.write(content)
     n_endings = update_endings()
+    n_terms = gen_terms_doc()
     print(
-        "docs: %d nodes -> %s; updated %d ending summaries"
-        % (len(nodes), SCRIPT_FILE, n_endings)
+        "docs: %d nodes -> %s; updated %d ending summaries; %d terms -> %s"
+        % (len(nodes), SCRIPT_FILE, n_endings, n_terms, TERMS_FILE)
     )
 
 
