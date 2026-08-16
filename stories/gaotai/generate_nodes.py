@@ -12,6 +12,7 @@ import io
 import json
 import os
 import re
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nodes")
@@ -333,6 +334,8 @@ def write_terms_data(categories, terms):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     os.makedirs(OUT, exist_ok=True)
     for n in NODES:
         node = dict(n)

@@ -184,6 +184,10 @@ export interface StoryDefinition {
   relationMeta: Record<RelationType, { label: string; color: string }>;
   factions: Record<string, Faction>;
   varLabels?: VariableLabels; // 状态面板文案（缺省用通用标签）
+  /** 分幕文案覆盖（1/2/3/9 → 显示名；缺省用“第一幕 · Day N”等通用文案）。 */
+  actLabels?: Partial<Record<number, string>>;
+  /** 理智濒危警告文案（sanity<30 时显示；缺省用通用文案）。 */
+  sanityWarning?: string;
   resolveDeath?: (s: Session) => DeathResult | null; // 变量死亡名单（无则禁用）
   /** 名词表：正文按词条高亮（分类配色 + 悬停释义），并可随进度逐条解密。 */
   terms?: TermDef[];

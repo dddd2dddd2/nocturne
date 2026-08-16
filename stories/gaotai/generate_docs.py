@@ -17,6 +17,7 @@ import os
 import re
 import json
 import glob
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROSE = os.path.join(HERE, "prose")
@@ -200,6 +201,8 @@ def gen_terms_doc():
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     nodes = read_nodes()
     titles = read_titles()
     os.makedirs(SCRIPT_OUT, exist_ok=True)

@@ -196,7 +196,7 @@ export default function NodeMap({ story, engine, session }: Props) {
                     fontSize="10.5"
                     fontFamily="var(--mono)"
                   >
-                    {n.id} · {actOf(n.id)}
+                    {n.id} · {actOf(n.id, story.actLabels)}
                   </text>
                 </g>
               );
@@ -210,7 +210,7 @@ export default function NodeMap({ story, engine, session }: Props) {
                 {titleOf(selectedNode.id)}
               </div>
               <div className="node-sub">
-                {selectedNode.id} · {actOf(selectedNode.id)}
+                {selectedNode.id} · {actOf(selectedNode.id, story.actLabels)}
               </div>
               <p style={{ lineHeight: 1.9, fontSize: 13.5, color: "var(--text)", whiteSpace: "pre-wrap" }}>
                 {selectedNode.narrative}

@@ -2,8 +2,9 @@
    （story.ts 需默认导出 StoryDefinition） */
 import type { StoryDefinition } from "./engine/types";
 import charon from "../stories/charon/story";
+import gaotai from "../stories/gaotai/story";
 
-const ALL: StoryDefinition[] = [charon];
+const ALL: StoryDefinition[] = [charon, gaotai];
 
 export const STORIES: StoryDefinition[] = [...ALL].sort((a, b) => a.order - b.order);
 

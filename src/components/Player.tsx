@@ -83,7 +83,7 @@ export default function Player({
   const last = session.history[session.history.length - 1];
   const total = clueTotal(session.state);
   const labels = story.varLabels ?? {};
-  const statSummary = `SAN ${session.state.sanity} · 线索 ${total} · ${labels.key ?? "密钥"} ${session.state.key ? "✔" : "✘"}`;
+  const statSummary = `${labels.sanity ?? "SAN"} ${session.state.sanity} · 线索 ${total} · ${labels.key ?? "密钥"} ${session.state.key ? "✔" : "✘"}`;
   const titleOf = (id: string) => story.nodeTitles[id] ?? id;
   const death = story.resolveDeath?.(session) ?? null;
   const showDeathList = !!death && session.nodeId.startsWith("Node_2");
@@ -235,7 +235,7 @@ export default function Player({
         <main ref={mainRef}>
           <ReaderBarPanel prefs={prefs} onChange={set} />
           <div className="ending-card">
-            <div className="ending-badge">ENDING · {actOf(session.nodeId)}</div>
+            <div className="ending-badge">ENDING · {actOf(session.nodeId, story.actLabels)}</div>
             <div className="ending-title">{title}</div>
             <ProseView
               text={body}
@@ -285,7 +285,7 @@ export default function Player({
       <main ref={mainRef}>
         <div className="node-title">{titleOf(session.nodeId)}</div>
         <div className="node-sub">
-          {session.nodeId} · {actOf(session.nodeId)} · 已走过 {session.history.length} 步
+          {session.nodeId} · {actOf(session.nodeId, story.actLabels)} · 已走过 {session.history.length} 步
           <span className="autosave"> · 已自动存档</span>
         </div>
         {last?.outcome && (
@@ -728,7 +728,7 @@ function StatePanel({
           {bar(r.value, r.cls)}
           {r.warn && (
             <div style={{ fontSize: 11, color: "var(--red)", marginTop: 5 }}>
-              ⚠ 理智濒危——幻觉正在逼近
+              {story.sanityWarning ?? "⚠ 理智濒危——幻觉正在逼近"}
             </div>
           )}
         </div>
